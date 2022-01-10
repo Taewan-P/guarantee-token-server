@@ -2,10 +2,12 @@ import uvicorn
 import json
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from web3 import Web3, HTTPProvider
 from web3.middleware import geth_poa_middleware
 from DataClass import Address, Transaction
+from NodeExceptions import *
 
 truffleFile = json.load(open('./build/contracts/GuaranteeToken.json'))
 ABI = truffleFile['abi']
@@ -29,10 +31,42 @@ w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 app = FastAPI()
 
 
+@app.exception_handler(NodeNotConnectedException)
+async def not_connected_exception_handler(request: Request):
+    return JSONResponse(
+        status_code=503,
+        content={'error': 'Geth node is not connected! Please check the address.'}
+    )
+
+
+@app.exception_handler(AddressInvalidException)
+async def address_invalid_exception_handler(request: Request):
+    return JSONResponse(
+        status_code=406,
+        content={'error': 'Address parameter is not valid!'}
+    )
+
+
+@app.exception_handler(NodeSyncException)
+async def node_sync_exception_handler(request: Request):
+    return JSONResponse(
+        status_code=503,
+        content={'error': 'Node sync error has occurred. Please try again.'}
+    )
+
+
+@app.exception_handler(TransferInvalidException)
+async def invalid_transfer_exception_handler(request: Request):
+    return JSONResponse(
+        status_code=503,
+        content={'error': 'Transfer cannot be made at the moment.'}
+    )
+
+
 @app.get("/node")
 async def ping_server():
     if w3.isConnected() is False:
-        return {'error': 'Geth node is not connected! Please check the address.'}
+        raise NodeNotConnectedException
 
     return {'status': 'Geth node is connected.'}
 
@@ -40,39 +74,41 @@ async def ping_server():
 @app.post("/node/mint")
 async def mint_token(dest: Address):
     if w3.isConnected() is False:
-        return {'error': 'Geth node is not connected! Please check the address.'}
+        raise NodeNotConnectedException
 
     contract_instance = w3.eth.contract(abi=ABI, address=CONTRACT_ADDRESS)
     try:
         addr = dest.address
         destination = Web3.toChecksumAddress(addr)
-    except ValueError as e:
-        print(f'Destination address not valid! //')
-        return {'error': e}
+    except ValueError:
+        raise AddressInvalidException
 
     tx = contract_instance.functions.safeMint(destination)
-    result = tx.transact({'from': w3.eth.accounts[0]})
+
+    try:
+        result = tx.transact({'from': w3.eth.accounts[0]})
+    except Exception:
+        raise TransferInvalidException
+
     return {'result': 'success', 'txhash': result.hex()}
 
 
 @app.post("/node/balance")
 async def check_balance(account: Address):
     if w3.isConnected() is False:
-        return {'error': 'Geth node is not connected! Please check the address.'}
+        raise NodeNotConnectedException
 
     contract_instance = w3.eth.contract(abi=ABI, address=CONTRACT_ADDRESS)
     try:
         address = Web3.toChecksumAddress(account.address)
-    except ValueError as e:
-        print('Address param not valid!')
-        return {'error': e}
+    except ValueError:
+        raise AddressInvalidException
 
     balance = contract_instance.functions.balanceOf(address)
     try:
         result = balance.call()
-    except Exception as e:
-        print('Eth node error!')
-        return {'error': e}
+    except Exception:
+        raise NodeSyncException
 
     return {'account': address, 'balance': result}
 
@@ -80,29 +116,26 @@ async def check_balance(account: Address):
 @app.post("/node/tokens")
 async def get_token_list(account: Address):
     if w3.isConnected() is False:
-        return {'error': 'Geth node is not connected! Please check the address.'}
+        raise NodeNotConnectedException
 
     contract_instance = w3.eth.contract(abi=ABI, address=CONTRACT_ADDRESS)
     try:
         address = Web3.toChecksumAddress(account.address)
-    except ValueError as e:
-        print('Address param not valid!')
-        return {'error': e}
+    except ValueError:
+        raise AddressInvalidException
 
     balance = contract_instance.functions.balanceOf(address)
     try:
         num_of_tokens = balance.call()
-    except Exception as e:
-        print('Eth node error!')
-        return {'error': e}
+    except Exception:
+        raise NodeSyncException
 
     result = []
     for n in range(num_of_tokens):
         try:
             tid = contract_instance.functions.tokenOfOwnerByIndex(address, n).call()
-        except Exception as e:
-            print('Eth node error!!')
-            return {'error': e}
+        except Exception:
+            raise NodeSyncException
         else:
             result.append(tid)
 
