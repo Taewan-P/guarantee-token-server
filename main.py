@@ -68,7 +68,10 @@ async def ping_server():
     if w3.isConnected() is False:
         raise NodeNotConnectedException
 
-    return {'status': 'Geth node is connected.'}
+    return JSONResponse(
+        status_code=200,
+        content={'status': 'Geth node is connected.'}
+    )
 
 
 @app.post("/node/mint")
@@ -90,7 +93,10 @@ async def mint_token(dest: Address):
     except Exception:
         raise TransferInvalidException
 
-    return {'result': 'success', 'txhash': result.hex()}
+    return JSONResponse(
+        status_code=200,
+        content={'result': 'success', 'txhash': result.hex()}
+    )
 
 
 @app.post("/node/balance")
@@ -110,7 +116,10 @@ async def check_balance(account: Address):
     except Exception:
         raise NodeSyncException
 
-    return {'account': address, 'balance': result}
+    return JSONResponse(
+        status_code=200,
+        content={'account': address, 'balance': result}
+    )
 
 
 @app.post("/node/tokens")
@@ -139,7 +148,12 @@ async def get_token_list(account: Address):
         else:
             result.append(tid)
 
-    return {'account': address, 'tokens': result}
+    return JSONResponse(
+        status_code=200,
+        content={'account': address, 'tokens': result}
+    )
+
+
 
 
 if __name__ == "__main__":
