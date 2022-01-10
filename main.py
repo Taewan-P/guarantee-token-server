@@ -5,7 +5,7 @@ import os
 from fastapi import FastAPI
 from web3 import Web3, HTTPProvider
 from web3.middleware import geth_poa_middleware
-from pydantic import BaseModel
+from DataClass import Address, Transaction
 
 truffleFile = json.load(open('./build/contracts/GuaranteeToken.json'))
 ABI = truffleFile['abi']
@@ -27,10 +27,6 @@ w3 = Web3(HTTPProvider(server_address_env))
 w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 app = FastAPI()
-
-
-class Address(BaseModel):
-    address: str
 
 
 @app.get("/node")
