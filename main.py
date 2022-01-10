@@ -56,7 +56,7 @@ async def node_sync_exception_handler(request: Request):
 
 
 @app.exception_handler(TransferInvalidException)
-async def invalid_transfer_exception_handler(request: Request):
+async def invalid_transfer_exception_handler(request: Request, exception):
     return JSONResponse(
         status_code=503,
         content={'error': 'Transfer cannot be made at the moment.'}
@@ -154,6 +154,29 @@ async def get_token_list(account: Address):
     )
 
 
+@app.post("/node/transfer")
+async def transfer(body: Transaction):
+    if w3.isConnected() is False:
+        raise NodeNotConnectedException
+
+    contract_instance = w3.eth.contract(abi=ABI, address=CONTRACT_ADDRESS)
+    try:
+        sender = Web3.toChecksumAddress(body.sender)
+        receiver = Web3.toChecksumAddress(body.receiver)
+    except ValueError:
+        raise AddressInvalidException
+
+    token_id = body.tid
+
+    try:
+        result = contract_instance.functions.safeTransferFrom(sender, receiver, token_id).transact({'from': sender})
+    except Exception:
+        raise TransferInvalidException
+
+    return JSONResponse(
+        status_code=200,
+        content={'result': 'success', 'txhash': result.hex()}
+    )
 
 
 if __name__ == "__main__":
