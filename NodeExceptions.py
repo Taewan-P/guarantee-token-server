@@ -12,3 +12,7 @@ class NodeSyncException(Exception):
 
 class TransferInvalidException(Exception):
     pass
+
+
+class ApprovalInvalidException(Exception):
+    pass

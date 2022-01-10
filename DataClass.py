@@ -8,4 +8,10 @@ class Address(BaseModel):
 class Transaction(BaseModel):
     sender: str
     receiver: str
+    transactor: str
+    tid: int
+
+
+class Approval(BaseModel):
+    receiver: str
     tid: int

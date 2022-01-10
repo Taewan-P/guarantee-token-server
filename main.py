@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from web3 import Web3, HTTPProvider
 from web3.middleware import geth_poa_middleware
-from DataClass import Address, Transaction
+from DataClass import Address, Transaction, Approval
 from NodeExceptions import *
 
 truffleFile = json.load(open('./build/contracts/GuaranteeToken.json'))
@@ -60,6 +60,14 @@ async def invalid_transfer_exception_handler(request: Request, exception):
     return JSONResponse(
         status_code=503,
         content={'error': 'Transfer cannot be made at the moment.'}
+    )
+
+
+@app.exception_handler(ApprovalInvalidException)
+async def invalid_approval_exception_handler(request: Request, exception):
+    return JSONResponse(
+        status_code=503,
+        content={'error', 'Approval not made. Please check if you actually own the token.'}
     )
 
 
@@ -163,19 +171,46 @@ async def transfer(body: Transaction):
     try:
         sender = Web3.toChecksumAddress(body.sender)
         receiver = Web3.toChecksumAddress(body.receiver)
+        transactor = Web3.toChecksumAddress(body.transactor)
     except ValueError:
         raise AddressInvalidException
 
     token_id = body.tid
 
     try:
-        result = contract_instance.functions.safeTransferFrom(sender, receiver, token_id).transact({'from': sender})
-    except Exception:
+        result = contract_instance.functions.safeTransferFrom(sender, receiver, token_id).transact({'from': transactor})
+    except Exception as e:
+        print(e)
         raise TransferInvalidException
 
     return JSONResponse(
         status_code=200,
         content={'result': 'success', 'txhash': result.hex()}
+    )
+
+
+@app.post("/node/approve")
+async def approve(body: Approval):
+    if w3.isConnected() is False:
+        raise NodeNotConnectedException
+
+    contract_instance = w3.eth.contract(abi=ABI, address=CONTRACT_ADDRESS)
+
+    try:
+        receiver = Web3.toChecksumAddress(body.receiver)
+    except ValueError:
+        raise AddressInvalidException
+
+    token_id = body.tid
+
+    try:
+        result = contract_instance.functions.approve(receiver, token_id).transact({'from': w3.eth.accounts[0]})
+    except Exception:
+        raise ApprovalInvalidException
+
+    return JSONResponse(
+        status_code=200,
+        content={'result': 'success'}
     )
 
 
