@@ -81,5 +81,37 @@ async def check_balance(account: Address):
     return {'account': address, 'balance': result}
 
 
+@app.post("/node/tokens")
+async def get_token_list(account: Address):
+    if w3.isConnected() is False:
+        return {'error': 'Geth node is not connected! Please check the address.'}
+
+    contract_instance = w3.eth.contract(abi=ABI, address=CONTRACT_ADDRESS)
+    try:
+        address = Web3.toChecksumAddress(account.address)
+    except ValueError as e:
+        print('Address param not valid!')
+        return {'error': e}
+
+    balance = contract_instance.functions.balanceOf(address)
+    try:
+        num_of_tokens = balance.call()
+    except Exception as e:
+        print('Eth node error!')
+        return {'error': e}
+
+    result = []
+    for n in range(num_of_tokens):
+        try:
+            tid = contract_instance.functions.tokenOfOwnerByIndex(address, n).call()
+        except Exception as e:
+            print('Eth node error!!')
+            return {'error': e}
+        else:
+            result.append(tid)
+
+    return {'account': address, 'tokens': result}
+
+
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
