@@ -33,7 +33,7 @@ class Address(BaseModel):
     address: str
 
 
-@app.get("/")
+@app.get("/node")
 async def ping_server():
     if w3.isConnected() is False:
         return {'error': 'Geth node is not connected! Please check the address.'}
@@ -41,7 +41,7 @@ async def ping_server():
     return {'status': 'Geth node is connected.'}
 
 
-@app.post("/mint")
+@app.post("/node/mint")
 async def mint_token(dest: Address):
     if w3.isConnected() is False:
         return {'error': 'Geth node is not connected! Please check the address.'}
@@ -59,7 +59,7 @@ async def mint_token(dest: Address):
     return {'result': 'success', 'txhash': result.hex()}
 
 
-@app.post("/balance")
+@app.post("/node/balance")
 async def check_balance(account: Address):
     if w3.isConnected() is False:
         return {'error': 'Geth node is not connected! Please check the address.'}
