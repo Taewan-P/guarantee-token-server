@@ -32,7 +32,7 @@ app = FastAPI()
 
 
 @app.exception_handler(NodeNotConnectedException)
-async def not_connected_exception_handler(request: Request):
+async def not_connected_exception_handler(request: Request, exception):
     return JSONResponse(
         status_code=503,
         content={'error': 'Geth node is not connected! Please check the address.'}
@@ -40,7 +40,7 @@ async def not_connected_exception_handler(request: Request):
 
 
 @app.exception_handler(AddressInvalidException)
-async def address_invalid_exception_handler(request: Request):
+async def address_invalid_exception_handler(request: Request, exception):
     return JSONResponse(
         status_code=406,
         content={'error': 'Address parameter is not valid!'}
@@ -48,7 +48,7 @@ async def address_invalid_exception_handler(request: Request):
 
 
 @app.exception_handler(NodeSyncException)
-async def node_sync_exception_handler(request: Request):
+async def node_sync_exception_handler(request: Request, exception):
     return JSONResponse(
         status_code=503,
         content={'error': 'Node sync error has occurred. Please try again.'}
