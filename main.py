@@ -2,6 +2,8 @@ import uvicorn
 import json
 import os
 
+import DB, models
+from sqlalchemy.orm import Session
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from web3 import Web3, HTTPProvider
@@ -213,6 +215,17 @@ async def approve(body: Approval):
         content={'result': 'success'}
     )
 
+@app.get("/calldb/{user_id}")
+def get_place(user_id: int, db: Session = Depends(DB.get_db)):
+    result = db.query(models.User).filter(models.User.id == user_id).first()
+
+    if result is None:
+        raise HTTPException(status_code=404, detail="ID에 해당하는 User가 없습니다.")
+
+    return {
+        "status": "OK",
+        "data": result
+    }
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
