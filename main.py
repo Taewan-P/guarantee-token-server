@@ -1,13 +1,15 @@
-import uvicorn
 import json
 import os
 
-import DB, models
-from sqlalchemy.orm import Session
+import uvicorn
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
+from sqlalchemy.orm import Session
 from web3 import Web3, HTTPProvider
 from web3.middleware import geth_poa_middleware
+
+import DB
+import models
 from DataClass import Address, Transaction, Approval
 from NodeExceptions import *
 
@@ -215,6 +217,7 @@ async def approve(body: Approval):
         content={'result': 'success'}
     )
 
+
 @app.get("/calldb/{user_id}")
 def get_place(user_id: int, db: Session = Depends(DB.get_db)):
     result = db.query(models.User).filter(models.User.id == user_id).first()
@@ -226,6 +229,7 @@ def get_place(user_id: int, db: Session = Depends(DB.get_db)):
         "status": "OK",
         "data": result
     }
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
