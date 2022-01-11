@@ -4,7 +4,7 @@ import os
 
 import DB, models
 from sqlalchemy.orm import Session
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from web3 import Web3, HTTPProvider
 from web3.middleware import geth_poa_middleware
