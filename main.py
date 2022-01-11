@@ -225,10 +225,10 @@ def get_place(user_id: int, db: Session = Depends(DB.get_db)):
     if result is None:
         raise HTTPException(status_code=404, detail="ID에 해당하는 User가 없습니다.")
 
-    return {
-        "status": "OK",
-        "data": result
-    }
+    return JSONResponse(
+        status_code=200,
+        content={"status": "OK", "data": result}
+    )
 
 
 if __name__ == "__main__":
