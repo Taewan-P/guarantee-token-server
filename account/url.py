@@ -18,3 +18,12 @@ def get_place(user_id: int, db: Session = Depends(DB.get_db)):
         status_code=200,
         content={"status": "OK", "data": result.jsonify()}
     )
+
+
+@account_router.post("/")
+def create_account():
+    """
+    TODO: Create account based on POST body values.
+    :return: JSONResponse with proper status code.
+    """
+    pass
