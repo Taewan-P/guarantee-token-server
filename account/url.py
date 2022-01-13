@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from account import DB, models
+from account.DataClass import LoginInfo, AccountInfo
 
 account_router = APIRouter()
 
@@ -20,10 +21,25 @@ def get_place(user_id: int, db: Session = Depends(DB.get_db)):
     )
 
 
-@account_router.post("/")
-def create_account():
+@account_router.post("/create")
+def create_account(account_info: AccountInfo):
     """
     TODO: Create account based on POST body values.
     :return: JSONResponse with proper status code.
     """
+    account_id = account_info.id
+    account_pw = account_info.password
+
+    pass
+
+
+@account_router.post("/login")
+def login(login_info: LoginInfo):
+    """
+    :param login_info: ID and Password in JSON format.
+    :return: JSONResponse with Valid JWT
+    """
+    login_id = login_info.id
+    login_pw = login_info.password
+
     pass
