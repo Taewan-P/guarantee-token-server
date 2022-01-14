@@ -39,7 +39,7 @@ def login(login_info: LoginInfo):
     :param login_info: ID and Password in JSON format.
     :return: JSONResponse with Valid JWT
     """
-    login_id = login_info.id
+    login_id = login_info.user_id
     login_pw = login_info.password
 
     pass
