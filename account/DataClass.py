@@ -7,5 +7,6 @@ class LoginInfo(BaseModel):
 
 
 class AccountInfo(BaseModel):
-    id: str
+    user_id: str
     password: str
+    wallet_password: str
