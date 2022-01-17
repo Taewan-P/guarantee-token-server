@@ -4,18 +4,19 @@ from account.DB import Base
 
 
 class User(Base):
-    __tablename__ = "user"
+    __tablename__ = "User"
 
-    id = Column(Integer, primary_key=True, nullable=False)
-    username = Column(String, nullable=False)
-    password = Column(String, nullable=False)
-    nickname = Column(String, nullable=False)
+    user_id = Column(String, primary_key=True, nullable=False)
+    user_pw_encrypted = Column(String, nullable=False)
+    user_wallet = Column(String, nullable=False)
+    user_type = Column(String, nullable=False)
 
     def jsonify(self):
         result = dict()
 
-        result['id'] = self.id
-        result['username'] = self.username
-        result['nickname'] = self.nickname
+        result['user_id'] = self.user_id
+        result['user_id_encrypted'] = self.user_pw_encrypted
+        result['user_wallet'] = self.user_wallet
+        result['user_type'] = self.user_type
 
         return result

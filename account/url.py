@@ -1,4 +1,7 @@
 import os
+import bcrypt
+import jwt
+import datetime
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
@@ -35,7 +38,7 @@ def get_place(user_id: int, db: Session = Depends(DB.get_db)):
 
 
 @account_router.post("/create")
-def create_account(account_info: AccountInfo):
+def create_account(account_info: AccountInfo, db: Session = Depends(DB.get_db)):
     """
     TODO: Create account based on POST body values.
     :return: JSONResponse with proper status code.
@@ -44,16 +47,26 @@ def create_account(account_info: AccountInfo):
     account_pw = account_info.password
     account_wallet_pw = account_info.wallet_password
 
-    wallet_address = w3.geth.personal.new_account(account_wallet_pw)
+    if db.query(models.User).filter(models.User.user_id == account_id).all():
+        return JSONResponse(
+            status_code=503,
+            content={"error": "Same ID already exists!"}
+        )
+    else:
+        account_pw_encrypted = bcrypt.hashpw(account_pw.encode('utf-8'), bcrypt.gensalt())
+        wallet_address = w3.geth.personal.new_account(account_wallet_pw)
 
-    return JSONResponse(
-        status_code=200,
-        content={'account': wallet_address}
-    )
+        user = models.User(user_id=account_id, user_pw_encrypted=account_pw_encrypted, user_wallet=wallet_address, user_user_type="customer")
+        db.add(user)
+        db.commit()
 
+        return JSONResponse(
+            status_code=200,
+            content={"account": wallet_address}
+        )
 
 @account_router.post("/login")
-def login(login_info: LoginInfo):
+def login(login_info: LoginInfo, db: Session = Depends(DB.get_db)):
     """
     :param login_info: ID and Password in JSON format.
     :return: JSONResponse with Valid JWT
@@ -61,4 +74,23 @@ def login(login_info: LoginInfo):
     login_id = login_info.user_id
     login_pw = login_info.password
 
-    pass
+    selected_row = db.query(models.User).filter(models.User.user_id == login_id).first()
+
+    if selected_row:
+        user_pw_encrypted = selected_row.user_pw_encrypted
+        if bcrypt.checkpw(login_pw.encode('utf-8'), user_pw_encrypted.encode('utf-8')):
+            encoded_jwt = jwt.encode({"exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=30), "user_id": login_id}, "", algorithm="")
+            return JSONResponse(
+                status_code=200,
+                content={"jwt": "encoded_jwt"}
+            )
+        else:
+            return JSONResponse(
+                status_code=503,
+                content={"error": "Wrong password!"}
+            )
+    else:
+        return JSONResponse(
+            status_code=503,
+            content={"error": "ID does not exist!"}
+        )
