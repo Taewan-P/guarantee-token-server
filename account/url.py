@@ -27,19 +27,6 @@ w3 = Web3(HTTPProvider(server_address_env))
 w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
-@account_router.get("/{user_id}")
-def get_place(user_id: int, db: Session = Depends(DB.get_db)):
-    result = db.query(models.User).filter(models.User.id == user_id).first()
-
-    if result is None:
-        return JSONResponse(status_code=404, content={"error": 'No account available here.'})
-
-    return JSONResponse(
-        status_code=200,
-        content={"status": "OK", "data": result.jsonify()}
-    )
-
-
 @account_router.post("/create")
 def create_account(account_info: AccountInfo, db: Session = Depends(DB.get_db)):
     """
