@@ -106,7 +106,7 @@ async def mint_token(dest: Address) -> JSONResponse:
     # Get token id
     try:
         n_tokens = contract_instance.functions.balanceOf(w3.eth.accounts[0]).call()
-        token_id = contract_instance.functions.tokenOfOwnerByIndex(w3.eth.accounts[0], n_tokens).call()
+        token_id = contract_instance.functions.tokenOfOwnerByIndex(w3.eth.accounts[0], n_tokens-1).call()
     except Exception:
         return node_sync_exception()
 
