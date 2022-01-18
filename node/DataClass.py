@@ -15,3 +15,8 @@ class Transaction(BaseModel):
 class Approval(BaseModel):
     receiver: str
     tid: int
+
+
+class Validation(BaseModel):
+    tid: int
+    owner: str
