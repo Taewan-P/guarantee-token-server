@@ -103,6 +103,13 @@ async def mint_token(dest: Address) -> JSONResponse:
     minter = tx_info['from']
     hist = [minter]
 
+    # Get token id
+    try:
+        n_tokens = contract_instance.functions.balanceOf(w3.eth.accounts[0]).call()
+        token_id = contract_instance.functions.tokenOfOwnerByIndex(w3.eth.accounts[0], n_tokens).call()
+    except Exception:
+        return node_sync_exception()
+
     return JSONResponse(
         status_code=200,
         content={'result': 'success', 'txhash': result.hex()}
