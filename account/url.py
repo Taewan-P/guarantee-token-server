@@ -1,7 +1,10 @@
 import os
+import string
+import random
+import datetime
 import bcrypt
 import jwt
-import datetime
+
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
@@ -49,7 +52,7 @@ def create_account(account_info: AccountInfo, db: Session = Depends(DB.get_db)):
 
     if db.query(models.User).filter(models.User.user_id == account_id).all():
         return JSONResponse(
-            status_code=503,
+            status_code=200,
             content={"error": "Same ID already exists!"}
         )
     else:
@@ -79,18 +82,23 @@ def login(login_info: LoginInfo, db: Session = Depends(DB.get_db)):
     if selected_row:
         user_pw_encrypted = selected_row.user_pw_encrypted
         if bcrypt.checkpw(login_pw.encode('utf-8'), user_pw_encrypted.encode('utf-8')):
-            encoded_jwt = jwt.encode({"exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=30), "user_id": login_id}, "", algorithm="")
+            passphrase = ''.join(random.choice(string.ascii_letters + string.digits) for i in range(12))
+            encoded_jwt = jwt.encode({"exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=30), "uid": login_id}, passphrase, algorithm="HS256")
+            user = db.query(models.User).filter(models.User.user_id == login_id).first()
+            user.passphrase = passphrase
+            db.commit()
+            
             return JSONResponse(
                 status_code=200,
-                content={"jwt": "encoded_jwt"}
+                content={"jwt": encoded_jwt}
             )
         else:
             return JSONResponse(
-                status_code=503,
-                content={"error": "Wrong password!"}
+                status_code=401,
+                content={"error": "Password mismatch!"}
             )
     else:
         return JSONResponse(
-            status_code=503,
+            status_code=200,
             content={"error": "ID does not exist!"}
         )
