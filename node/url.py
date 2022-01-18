@@ -186,7 +186,7 @@ async def transfer(body: Transaction) -> JSONResponse:
     )
 
 
-@node_router.post("/node/approve")
+@node_router.post("/approve")
 async def approve(body: Approval) -> JSONResponse:
     if w3.isConnected() is False:
         return not_connected_exception()
