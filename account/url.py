@@ -41,11 +41,17 @@ def create_account(account_info: AccountInfo, db: Session = Depends(DB.get_db)):
             content={"error": "Same ID already exists!"}
         )
     else:
+        try:
+            wallet_address = w3.geth.personal.new_account(account_wallet_pw)
+        except:
+            return JSONResponse(
+                status_code=503,
+                content={"error": "Error occured while creating your wallet! Please try again."}
+            )
         account_pw_encrypted = bcrypt.hashpw(account_pw.encode('utf-8'), bcrypt.gensalt())
-        wallet_address = w3.geth.personal.new_account(account_wallet_pw)
 
         user = models.User(user_id=account_id, user_pw_encrypted=account_pw_encrypted, user_wallet=wallet_address,
-                           user_user_type="customer")
+                           user_type="customer")
         db.add(user)
         db.commit()
 
@@ -73,7 +79,7 @@ def login(login_info: LoginInfo, db: Session = Depends(DB.get_db)):
             passphrase = ''.join(random.choice(string.ascii_letters + string.digits) for i in range(12))
             encoded_jwt = jwt.encode(
                 {
-                    "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=30),
+                    "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7),
                     "uid": login_id
                 }, passphrase, algorithm="HS256"
             )
