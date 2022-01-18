@@ -6,8 +6,7 @@ from fastapi.responses import JSONResponse
 from web3 import Web3, HTTPProvider
 from web3.middleware import geth_poa_middleware
 
-from node.DataClass import Address, Transaction, Approval
-
+from node.DataClass import Address, Transaction, Approval, Validation
 
 node_router = APIRouter()
 
@@ -209,4 +208,38 @@ async def approve(body: Approval) -> JSONResponse:
     return JSONResponse(
         status_code=200,
         content={'result': 'success'}
+    )
+
+
+@node_router.post("/validate")
+async def validate_token(body: Validation):
+    if w3.isConnected() is False:
+        return not_connected_exception()
+
+    token_id = body.tid
+
+    try:
+        receiver = Web3.toChecksumAddress(body.owner)
+    except ValueError:
+        return address_invalid_exception()
+
+    # Validation Process - Validate token by Key-Value tx storage. Key is token id and Value is a stack of account
+    # address. Validation will check token id and see if the last element of the stack is the owner. Also,
+    # the server will check if the token is from the manufacturer type address.
+
+    # Get value from KV storage using token_id
+    tx_history = []
+
+    # Check transaction history and validate token
+    if Web3.toChecksumAddress(tx_history[-1]) != receiver:
+        return JSONResponse(
+            status_code=200,
+            content={'result': 'invalid', 'detail': 'Token not properly owned.'}
+        )
+
+    # Check the token is from the manufacturer type address
+
+    return JSONResponse(
+        status_code=200,
+        content={'result': 'valid', 'txHistory': []}
     )
