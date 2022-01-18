@@ -98,6 +98,11 @@ async def mint_token(dest: Address) -> JSONResponse:
     except Exception:
         return invalid_transfer_exception()
 
+    # Add transaction history to K-V DB
+    tx_info = w3.eth.get_transaction(result.hex())
+    minter = tx_info['from']
+    hist = [minter]
+
     return JSONResponse(
         status_code=200,
         content={'result': 'success', 'txhash': result.hex()}
@@ -179,6 +184,10 @@ async def transfer(body: Transaction) -> JSONResponse:
     except Exception as e:
         print(e)
         return invalid_transfer_exception()
+
+    # Add result to K-V DB
+    tx_info = w3.eth.get_transaction(result.hex())
+    receiver_from_tx = tx_info['to']  # Append to K-V DB
 
     return JSONResponse(
         status_code=200,
