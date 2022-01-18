@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from web3 import Web3, HTTPProvider
 from web3.middleware import geth_poa_middleware
 
-from account import DB, models
+from database import DB, models
 from account.DataClass import LoginInfo, AccountInfo
 
 account_router = APIRouter()
@@ -72,8 +72,11 @@ def login(login_info: LoginInfo, db: Session = Depends(DB.get_db)):
         if bcrypt.checkpw(login_pw.encode('utf-8'), user_pw_encrypted.encode('utf-8')):
             passphrase = ''.join(random.choice(string.ascii_letters + string.digits) for i in range(12))
             encoded_jwt = jwt.encode(
-                {"exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=30), "uid": login_id}, passphrase,
-                algorithm="HS256")
+                {
+                    "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=30),
+                    "uid": login_id
+                }, passphrase, algorithm="HS256"
+            )
             user = db.query(models.User).filter(models.User.user_id == login_id).first()
             user.passphrase = passphrase
             db.commit()

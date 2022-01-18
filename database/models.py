@@ -1,6 +1,5 @@
 from sqlalchemy import Column, Integer, String
-
-from account.DB import Base
+from database.DB import Base
 
 
 class User(Base):
