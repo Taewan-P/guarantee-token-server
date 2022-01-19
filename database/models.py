@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey
 from database.DB import Base
 
 
@@ -21,5 +21,6 @@ class Token(Base):
 class History(Base):
     __tablename__ = "History"
 
-    token_id = Column(Integer, nullable=False)
-    tracking = Column(String, primary_key=True, nullable=False)
+    history_id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
+    token_id = Column(Integer, ForeignKey('Token.token_id'), nullable=False)
+    tracking = Column(String, nullable=False)
