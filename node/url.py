@@ -69,6 +69,13 @@ def invalid_approval_exception() -> JSONResponse:
     )
 
 
+def invalid_login_token_exception() -> JSONResponse:
+    return JSONResponse(
+        status_code=401,
+        content={'error', 'Login token is not valid.'}
+    )
+
+
 def validate_login_token(token: str) -> dict:
     db = next(DB.get_db())
     try:
