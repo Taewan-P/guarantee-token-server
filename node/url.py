@@ -207,7 +207,8 @@ async def mint_token(dest: Address, db: Session = Depends(DB.get_db),
         n_tokens = contract_instance.functions.balanceOf(destination).call()
         token_id = contract_instance.functions.tokenOfOwnerByIndex(destination, n_tokens - 1).call()
         print(f'token_id: {token_id}')
-    except Exception:
+    except Exception as e:
+        print(f'Error: {e}')
         return node_sync_exception()
 
     history = models.History(token_id=token_id, tracking=minter)
