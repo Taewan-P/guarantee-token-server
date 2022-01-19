@@ -204,8 +204,8 @@ async def mint_token(dest: Address, db: Session = Depends(DB.get_db),
 
     # Get token id
     try:
-        n_tokens = contract_instance.functions.balanceOf(w3.eth.accounts[0]).call()
-        token_id = contract_instance.functions.tokenOfOwnerByIndex(w3.eth.accounts[0], n_tokens - 1).call()
+        n_tokens = contract_instance.functions.balanceOf(destination).call()
+        token_id = contract_instance.functions.tokenOfOwnerByIndex(destination, n_tokens - 1).call()
         print(f'token_id: {token_id}')
     except Exception:
         return node_sync_exception()
