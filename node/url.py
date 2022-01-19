@@ -65,14 +65,35 @@ def invalid_transfer_exception() -> JSONResponse:
 def invalid_approval_exception() -> JSONResponse:
     return JSONResponse(
         status_code=503,
-        content={'error', 'Approval not made. Please check if you actually own the token.'}
+        content={'error': 'Approval not made. Please check if you actually own the token.'}
     )
 
 
 def invalid_login_token_exception() -> JSONResponse:
     return JSONResponse(
         status_code=401,
-        content={'error', 'Login token is not valid.'}
+        content={'error': 'Login token is not valid.'}
+    )
+
+
+def invalid_permission_exception() -> JSONResponse:
+    return JSONResponse(
+        status_code=403,
+        content={'error': 'Not authorized (Permission)'}
+    )
+
+
+def wallet_password_mismatch_exception() -> JSONResponse:
+    return JSONResponse(
+        status_code=401,
+        content={'error': 'Incorrect wallet password'}
+    )
+
+
+def user_doesnt_own_wallet_exception() -> JSONResponse:
+    return JSONResponse(
+        status_code=401,
+        content={'error': 'User does not own this wallet.'}
     )
 
 
@@ -128,13 +149,19 @@ async def ping_server(x_access_token: Optional[str] = Header(None)) -> JSONRespo
 
 
 @node_router.post("/mint")
-async def mint_token(dest: Address, db: Session = Depends(DB.get_db)) -> JSONResponse:
-    """
-    AUTH Needed!
-    """
+async def mint_token(dest: Address, db: Session = Depends(DB.get_db),
+                     x_access_token: Optional[str] = Header(None)) -> JSONResponse:
+
     if w3.isConnected() is False:
         return not_connected_exception()
 
+    # Check login token validity
+    token_validity = validate_login_token(x_access_token)
+
+    if token_validity.get('result', 'invalid') == 'invalid':
+        return invalid_login_token_exception()
+
+    # Check destination address
     contract_instance = w3.eth.contract(abi=ABI, address=CONTRACT_ADDRESS)
     try:
         addr = dest.address
@@ -142,10 +169,31 @@ async def mint_token(dest: Address, db: Session = Depends(DB.get_db)) -> JSONRes
     except ValueError:
         return address_invalid_exception()
 
+    # Check if user owns the wallet
+    wallet_user_id = db.query(models.User).filter(models.User.user_wallet == destination).first().user_id
+    if wallet_user_id != token_validity['token']['uid']:
+        return user_doesnt_own_wallet_exception()
+
+    # Check account type
+    minter_type = db.query(models.User).filter(models.User.user_wallet == destination).first().user_type
+    if minter_type != "manufacturer":
+        return invalid_permission_exception()
+
+    # Unlock wallet
+    try:
+        account_unlock = w3.geth.personal.unlock_account(destination, dest.wallet_password)
+    except ValueError:
+        return wallet_password_mismatch_exception()
+    else:
+        if account_unlock is False:
+            return wallet_password_mismatch_exception()
+        else:
+            print('Account unlock successful')
+
     tx = contract_instance.functions.safeMint(destination)
 
     try:
-        result = tx.transact({'from': w3.eth.accounts[0]})
+        result = tx.transact({'from': destination})
     except Exception:
         return invalid_transfer_exception()
 
@@ -158,6 +206,7 @@ async def mint_token(dest: Address, db: Session = Depends(DB.get_db)) -> JSONRes
     try:
         n_tokens = contract_instance.functions.balanceOf(w3.eth.accounts[0]).call()
         token_id = contract_instance.functions.tokenOfOwnerByIndex(w3.eth.accounts[0], n_tokens - 1).call()
+        print(f'token_id: {token_id}')
     except Exception:
         return node_sync_exception()
 
@@ -316,7 +365,7 @@ async def validate_token(body: Validation, db: Session = Depends(DB.get_db)):
         )
 
     # Check the token is from the manufacturer type address
-    minter_type = db.query(models.User).filter(models.User == tx_history[0]).first().user_type
+    minter_type = db.query(models.User).filter(models.User.user_wallet == tx_history[0]).first().user_type
     if minter_type != "manufacturer":
         return JSONResponse(
             status_code=200,
