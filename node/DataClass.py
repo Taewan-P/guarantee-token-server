@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 class Address(BaseModel):
     address: str
+    wallet_password: str
 
 
 class Transaction(BaseModel):
