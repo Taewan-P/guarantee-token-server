@@ -22,5 +22,5 @@ class History(Base):
     __tablename__ = "History"
 
     history_id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
-    token_id = Column(Integer, ForeignKey('Token.token_id'), nullable=False)
+    token_id = Column(Integer, nullable=False)
     tracking = Column(String, nullable=False)
