@@ -1,5 +1,6 @@
 import json
 import os
+import jwt
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
@@ -65,6 +66,33 @@ def invalid_approval_exception() -> JSONResponse:
         status_code=503,
         content={'error', 'Approval not made. Please check if you actually own the token.'}
     )
+
+
+def validate_login_token(token: str) -> dict:
+    db = next(DB.get_db())
+    try:
+        extracted = jwt.decode(token, algorithms='HS256', options={'verify_signature': False,
+                                                                   'require': ['exp', 'uid']})
+    except jwt.exceptions.MissingRequiredClaimError:
+        print('Token MissingRequiredClaimError')
+        return {'result': 'invalid'}
+    except jwt.exceptions.DecodeError:
+        print('Token DecodeError')
+        return {'result': 'invalid'}
+
+    try:
+        passphrase = db.query(models.User).filter(models.User.user_id == extracted['uid']).first().passphrase
+        validated = jwt.decode(token, algorithms='HS256', key=passphrase, options={'verify_signature': True,
+                                                                                   'require': ['exp', 'uid']})
+
+        if validated != extracted:
+            raise jwt.exceptions.InvalidSignatureError
+
+    except jwt.exceptions.InvalidSignatureError:
+        print('Token InvalidSignatureError')
+        return {'result': 'invalid'}
+
+    return {'result': 'valid', 'token': validated}
 
 
 @node_router.get("/")
