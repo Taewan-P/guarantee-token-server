@@ -11,10 +11,12 @@ class User(Base):
     user_wallet = Column(String)
     user_type = Column(String, nullable=False)
 
+
 class Token(Base):
     __tablename__ = "Token"
 
     token_id = Column(Integer, primary_key=True, nullable=False)
+
 
 class History(Base):
     __tablename__ = "History"
