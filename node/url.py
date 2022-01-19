@@ -267,6 +267,12 @@ async def validate_token(body: Validation, db: Session = Depends(DB.get_db)):
         )
 
     # Check the token is from the manufacturer type address
+    minter_type = db.query(models.User).filter(models.User == tx_history[0]).first().user_type
+    if minter_type != "manufacturer":
+        return JSONResponse(
+            status_code=200,
+            content={'result': 'invalid', 'detail': 'Token minter is not manufacturer'}
+        )
 
     return JSONResponse(
         status_code=200,
