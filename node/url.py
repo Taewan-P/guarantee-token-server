@@ -255,8 +255,8 @@ async def validate_token(body: Validation, db: Session = Depends(DB.get_db)):
 
     # Get value from KV storage using token_id
     tx_history = list()
-    historys = db.query(models.History).filter(models.History.token_id == token_id).all()
-    for history in historys:
+    histories = db.query(models.History).filter(models.History.token_id == token_id).all()
+    for history in histories:
         tx_history.append(history.tracking)
 
     # Check transaction history and validate token
