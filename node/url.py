@@ -2,9 +2,10 @@ import json
 import os
 import jwt
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
+from typing import Optional
 from web3 import Web3, HTTPProvider
 from web3.middleware import geth_poa_middleware
 
@@ -96,14 +97,27 @@ def validate_login_token(token: str) -> dict:
 
 
 @node_router.get("/")
-async def ping_server() -> JSONResponse:
+async def ping_server(x_access_token: Optional[str] = Header(None)) -> JSONResponse:
     if w3.isConnected() is False:
         return not_connected_exception()
 
-    return JSONResponse(
-        status_code=200,
-        content={'status': 'Geth node is connected.'}
-    )
+    if not x_access_token:
+        return JSONResponse(
+            status_code=200,
+            content={'status': 'Geth node is connected.'}
+        )
+
+    result = validate_login_token(x_access_token)
+    if result.get('result', 'invalid') == 'invalid':
+        return JSONResponse(
+            status_code=200,
+            content={'status': 'Geth node is connected.', 'token_status': 'invalid'}
+        )
+    else:
+        return JSONResponse(
+            status_code=200,
+            content={'status': 'Geth node is connected.', 'token_status': 'valid'}
+        )
 
 
 @node_router.post("/mint")
