@@ -20,4 +20,4 @@ class History(Base):
     __tablename__ = "History"
 
     token_id = Column(Integer, nullable=False)
-    tracking = Column(String, nullable=False)
+    tracking = Column(String, primary_key=True, nullable=False)
