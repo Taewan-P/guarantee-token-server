@@ -1,11 +1,13 @@
 import json
 import os
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
+from sqlalchemy.orm import Session
 from web3 import Web3, HTTPProvider
 from web3.middleware import geth_poa_middleware
 
+from database import DB, models
 from node.DataClass import Address, Transaction, Approval, Validation
 
 node_router = APIRouter()
@@ -77,7 +79,7 @@ async def ping_server() -> JSONResponse:
 
 
 @node_router.post("/mint")
-async def mint_token(dest: Address) -> JSONResponse:
+async def mint_token(dest: Address, db: Session = Depends(DB.get_db)) -> JSONResponse:
     """
     AUTH Needed!
     """
@@ -109,6 +111,10 @@ async def mint_token(dest: Address) -> JSONResponse:
         token_id = contract_instance.functions.tokenOfOwnerByIndex(w3.eth.accounts[0], n_tokens-1).call()
     except Exception:
         return node_sync_exception()
+
+    history = models.History(token_id=token_id, tracking=minter)
+    db.add(history)
+    db.commit()
 
     return JSONResponse(
         status_code=200,
@@ -172,7 +178,7 @@ async def get_token_list(account: Address) -> JSONResponse:
 
 
 @node_router.post("/transfer")
-async def transfer(body: Transaction) -> JSONResponse:
+async def transfer(body: Transaction, db: Session = Depends(DB.get_db)) -> JSONResponse:
     if w3.isConnected() is False:
         return not_connected_exception()
 
@@ -195,6 +201,10 @@ async def transfer(body: Transaction) -> JSONResponse:
     # Add result to K-V DB
     tx_info = w3.eth.get_transaction(result.hex())
     receiver_from_tx = tx_info['to']  # Append to K-V DB
+
+    history = models.History(token_id=token_id, tracking=receiver_from_tx)
+    db.add(history)
+    db.commit()
 
     return JSONResponse(
         status_code=200,
@@ -228,7 +238,7 @@ async def approve(body: Approval) -> JSONResponse:
 
 
 @node_router.post("/validate")
-async def validate_token(body: Validation):
+async def validate_token(body: Validation, db: Session = Depends(DB.get_db)):
     if w3.isConnected() is False:
         return not_connected_exception()
 
@@ -244,7 +254,10 @@ async def validate_token(body: Validation):
     # the server will check if the token is from the manufacturer type address.
 
     # Get value from KV storage using token_id
-    tx_history = []
+    tx_history = list()
+    historys = db.query(models.History).filter(models.History.token_id == token_id).all()
+    for history in historys:
+        tx_history.append(history.tracking)
 
     # Check transaction history and validate token
     if Web3.toChecksumAddress(tx_history[-1]) != receiver:
