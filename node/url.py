@@ -207,7 +207,6 @@ async def mint_token(dest: Address, db: Session = Depends(DB.get_db),
     # Add transaction history to K-V DB
     tx_info = w3.eth.get_transaction(result.hex())
     minter = tx_info['from']
-    hist = [minter]
 
     # Get token id
     try:
