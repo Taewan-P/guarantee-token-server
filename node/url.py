@@ -263,15 +263,27 @@ async def check_balance(account: NoAuthAddress, db: Session = Depends(DB.get_db)
 
 
 @node_router.post("/tokens")
-async def get_token_list(account: Address) -> JSONResponse:
+async def get_token_list(account: NoAuthAddress, db: Session = Depends(DB.get_db),
+                         x_access_token: Optional[str] = Header(None)) -> JSONResponse:
     if w3.isConnected() is False:
         return not_connected_exception()
+
+    # Check login token validity
+    token_validity = validate_login_token(x_access_token)
+
+    if token_validity.get('result', 'invalid') == 'invalid':
+        return invalid_login_token_exception()
 
     contract_instance = w3.eth.contract(abi=ABI, address=CONTRACT_ADDRESS)
     try:
         address = Web3.toChecksumAddress(account.address)
     except ValueError:
         return address_invalid_exception()
+
+    # Check if user owns the wallet
+    wallet_user_id = db.query(models.User).filter(models.User.user_wallet == address).first().user_id
+    if wallet_user_id != token_validity['token']['uid']:
+        return user_doesnt_own_wallet_exception()
 
     balance = contract_instance.functions.balanceOf(address)
     try:
