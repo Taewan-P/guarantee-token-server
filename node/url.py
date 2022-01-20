@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 import jwt
@@ -119,6 +120,12 @@ def validate_login_token(token: str) -> dict:
 
     except jwt.exceptions.InvalidSignatureError:
         print('Token InvalidSignatureError')
+        return {'result': 'invalid'}
+
+    current_time = datetime.datetime.now().timestamp()
+
+    if int(validated['exp']) - current_time < 0:
+        print('Token ExpiredError')
         return {'result': 'invalid'}
 
     return {'result': 'valid', 'token': validated}
