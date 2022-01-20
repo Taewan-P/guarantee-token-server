@@ -21,6 +21,7 @@ class Transaction(BaseModel):
 class Approval(BaseModel):
     receiver: str
     tid: int
+    wallet_password: str
 
 
 class Validation(BaseModel):

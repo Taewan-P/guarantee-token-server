@@ -98,6 +98,11 @@ def user_doesnt_own_wallet_exception() -> JSONResponse:
     )
 
 
+def receiver_not_reseller_exception() -> JSONResponse:
+    return JSONResponse(
+        status_code=403,
+        content={'error': 'Receiver is not reseller.'}
+    )
 def validate_login_token(token: str) -> dict:
     db = next(DB.get_db())
     try:
@@ -381,9 +386,16 @@ async def transfer(body: Transaction, db: Session = Depends(DB.get_db),
 
 
 @node_router.post("/approve")
-async def approve(body: Approval) -> JSONResponse:
+async def approve(body: Approval, db: Session = Depends(DB.get_db),
+                  x_access_token: Optional[str] = Header(None)) -> JSONResponse:
     if w3.isConnected() is False:
         return not_connected_exception()
+
+    # Check login token validity
+    token_validity = validate_login_token(x_access_token)
+
+    if token_validity.get('result', 'invalid') == 'invalid':
+        return invalid_login_token_exception()
 
     contract_instance = w3.eth.contract(abi=ABI, address=CONTRACT_ADDRESS)
 
@@ -392,10 +404,37 @@ async def approve(body: Approval) -> JSONResponse:
     except ValueError:
         return address_invalid_exception()
 
+    # Check account type
+    approver = db.query(models.User).filter(models.User.user_id == token_validity['token']['uid']).first()
+    if approver.user_type != "manufacturer":
+        return invalid_permission_exception()
+
+    receiver_type = db.query(models.User).filter(models.User.user_wallet == receiver).first().user_type
+    if receiver_type != "reseller":
+        return receiver_not_reseller_exception()
+
     token_id = body.tid
 
+    # Get approver user wallet and check (Just in case)
     try:
-        result = contract_instance.functions.approve(receiver, token_id).transact({'from': w3.eth.accounts[0]})
+        approver_wallet = Web3.toChecksumAddress(approver.user_wallet)
+    except ValueError:
+        print('Address in DB is invalid!')
+        return address_invalid_exception()
+
+    # Unlock wallet
+    try:
+        account_unlock = w3.geth.personal.unlock_account(approver_wallet, body.wallet_password)
+    except ValueError:
+        return wallet_password_mismatch_exception()
+    else:
+        if account_unlock is False:
+            return wallet_password_mismatch_exception()
+        else:
+            print('Account unlock successful')
+
+    try:
+        result = contract_instance.functions.approve(receiver, token_id).transact({'from': approver_wallet})
     except Exception:
         return invalid_approval_exception()
 
