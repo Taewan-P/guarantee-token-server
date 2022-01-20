@@ -1,6 +1,10 @@
 from pydantic import BaseModel
 
 
+class NoAuthAddress(BaseModel):
+    address: str
+
+
 class Address(BaseModel):
     address: str
     wallet_password: str
