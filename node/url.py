@@ -203,7 +203,8 @@ async def mint_token(dest: Address, db: Session = Depends(DB.get_db),
     # Unlock wallet
     try:
         account_unlock = w3.geth.personal.unlock_account(destination, dest.wallet_password)
-    except ValueError:
+    except ValueError as e:
+        print(f'Error: {e}')
         return wallet_password_mismatch_exception()
     else:
         if account_unlock is False:
