@@ -103,6 +103,15 @@ def receiver_not_reseller_exception() -> JSONResponse:
         status_code=403,
         content={'error': 'Receiver is not reseller.'}
     )
+
+
+def reseller_not_approved_exception() -> JSONResponse:
+    return JSONResponse(
+        status_code=403,
+        content={'error': 'Reseller has no access to this token.'}
+    )
+
+
 def validate_login_token(token: str) -> dict:
     db = next(DB.get_db())
     try:
@@ -293,7 +302,8 @@ async def get_token_list(account: NoAuthAddress, db: Session = Depends(DB.get_db
     balance = contract_instance.functions.balanceOf(address)
     try:
         num_of_tokens = balance.call()
-    except Exception:
+    except Exception as e:
+        print(f'Error: {e}')
         return node_sync_exception()
 
     result = []
@@ -331,6 +341,8 @@ async def transfer(body: Transaction, db: Session = Depends(DB.get_db),
     except ValueError:
         return address_invalid_exception()
 
+    token_id = body.tid
+
     if sender == transactor:
         # Normal sending
         # Check if user owns the wallet
@@ -348,11 +360,12 @@ async def transfer(body: Transaction, db: Session = Depends(DB.get_db),
             return user_doesnt_own_wallet_exception()
 
         # Check account type
-        minter_type = wallet_transactor.user_type
-        if minter_type != "reseller":
+        transactor_type = wallet_transactor.user_type
+        if transactor_type != "reseller":
             return invalid_permission_exception()
 
-    token_id = body.tid
+        if contract_instance.functions.getApproved(token_id).call() != transactor:
+            return reseller_not_approved_exception()
 
     # Unlock wallet
     try:
