@@ -15,6 +15,7 @@ class Transaction(BaseModel):
     receiver: str
     transactor: str
     tid: int
+    wallet_password: str
 
 
 class Approval(BaseModel):

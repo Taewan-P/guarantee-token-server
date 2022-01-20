@@ -307,9 +307,16 @@ async def get_token_list(account: NoAuthAddress, db: Session = Depends(DB.get_db
 
 
 @node_router.post("/transfer")
-async def transfer(body: Transaction, db: Session = Depends(DB.get_db)) -> JSONResponse:
+async def transfer(body: Transaction, db: Session = Depends(DB.get_db),
+                   x_access_token: Optional[str] = Header(None)) -> JSONResponse:
     if w3.isConnected() is False:
         return not_connected_exception()
+
+    # Check login token validity
+    token_validity = validate_login_token(x_access_token)
+
+    if token_validity.get('result', 'invalid') == 'invalid':
+        return invalid_login_token_exception()
 
     contract_instance = w3.eth.contract(abi=ABI, address=CONTRACT_ADDRESS)
     try:
@@ -319,7 +326,39 @@ async def transfer(body: Transaction, db: Session = Depends(DB.get_db)) -> JSONR
     except ValueError:
         return address_invalid_exception()
 
+    if sender == transactor:
+        # Normal sending
+        # Check if user owns the wallet
+        wallet_sender = db.query(models.User).filter(models.User.user_wallet == sender).first()
+        wallet_user_id = wallet_sender.user_id
+        if wallet_user_id != token_validity['token']['uid']:
+            return user_doesnt_own_wallet_exception()
+
+    else:
+        # Approval sending (By reseller)
+        # Check if user owns the wallet
+        wallet_transactor = db.query(models.User).filter(models.User.user_wallet == transactor).first()
+        wallet_user_id = wallet_transactor.user_id
+        if wallet_user_id != token_validity['token']['uid']:
+            return user_doesnt_own_wallet_exception()
+
+        # Check account type
+        minter_type = wallet_transactor.user_type
+        if minter_type != "reseller":
+            return invalid_permission_exception()
+
     token_id = body.tid
+
+    # Unlock wallet
+    try:
+        account_unlock = w3.geth.personal.unlock_account(transactor, body.wallet_password)
+    except ValueError:
+        return wallet_password_mismatch_exception()
+    else:
+        if account_unlock is False:
+            return wallet_password_mismatch_exception()
+        else:
+            print('Account unlock successful')
 
     try:
         result = contract_instance.functions.safeTransferFrom(sender, receiver, token_id).transact({'from': transactor})
