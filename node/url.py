@@ -462,7 +462,7 @@ async def approve(body: Approval, db: Session = Depends(DB.get_db),
 
 
 @node_router.post("/validate")
-async def validate_token(body: Validation, db: Session = Depends(DB.get_db)):
+async def validate_token(body: Validation, db: Session = Depends(DB.get_db)) -> JSONResponse:
     if w3.isConnected() is False:
         return not_connected_exception()
 
