@@ -500,5 +500,5 @@ async def validate_token(body: Validation, db: Session = Depends(DB.get_db)) -> 
 
     return JSONResponse(
         status_code=200,
-        content={'result': 'valid', 'txHistory': []}
+        content={'result': 'valid', 'txHistory': tx_history}
     )
