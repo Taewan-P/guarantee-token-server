@@ -112,6 +112,13 @@ def reseller_not_approved_exception() -> JSONResponse:
     )
 
 
+def user_doesnt_exist_exception() -> JSONResponse:
+    return JSONResponse(
+        status_code=404,
+        content={'error': 'User doesn\'t exist.'}
+    )
+
+
 def validate_login_token(token: str) -> dict:
     db = next(DB.get_db())
     try:
@@ -134,6 +141,11 @@ def validate_login_token(token: str) -> dict:
 
     except jwt.exceptions.InvalidSignatureError:
         print('Token InvalidSignatureError')
+        return {'result': 'invalid'}
+
+    except AttributeError:
+        # DB query returned NoneType
+        print('DB query returned NoneType')
         return {'result': 'invalid'}
 
     current_time = datetime.datetime.now().timestamp()
@@ -191,12 +203,17 @@ async def mint_token(dest: Address, db: Session = Depends(DB.get_db),
         return address_invalid_exception()
 
     # Check if user owns the wallet
-    wallet_user_id = db.query(models.User).filter(models.User.user_wallet == destination).first().user_id
+    wallet_user = db.query(models.User).filter(models.User.user_wallet == destination).first()
+
+    if not wallet_user:
+        return user_doesnt_exist_exception()
+
+    wallet_user_id = wallet_user.user_id
     if wallet_user_id != token_validity['token']['uid']:
         return user_doesnt_own_wallet_exception()
 
     # Check account type
-    minter_type = db.query(models.User).filter(models.User.user_wallet == destination).first().user_type
+    minter_type = wallet_user.user_type
     if minter_type != "manufacturer":
         return invalid_permission_exception()
 
@@ -264,7 +281,12 @@ async def check_balance(account: NoAuthAddress, db: Session = Depends(DB.get_db)
         return address_invalid_exception()
 
     # Check if user owns the wallet
-    wallet_user_id = db.query(models.User).filter(models.User.user_wallet == address).first().user_id
+    wallet_user = db.query(models.User).filter(models.User.user_wallet == address).first()
+
+    if not wallet_user:
+        return user_doesnt_own_wallet_exception()
+
+    wallet_user_id = wallet_user.user_id
     if wallet_user_id != token_validity['token']['uid']:
         return user_doesnt_own_wallet_exception()
 
@@ -299,7 +321,12 @@ async def get_token_list(account: NoAuthAddress, db: Session = Depends(DB.get_db
         return address_invalid_exception()
 
     # Check if user owns the wallet
-    wallet_user_id = db.query(models.User).filter(models.User.user_wallet == address).first().user_id
+    wallet_user = db.query(models.User).filter(models.User.user_wallet == address).first()
+
+    if not wallet_user:
+        return user_doesnt_own_wallet_exception()
+
+    wallet_user_id = wallet_user.user_id
     if wallet_user_id != token_validity['token']['uid']:
         return user_doesnt_own_wallet_exception()
 
@@ -351,6 +378,10 @@ async def transfer(body: Transaction, db: Session = Depends(DB.get_db),
         # Normal sending
         # Check if user owns the wallet
         wallet_sender = db.query(models.User).filter(models.User.user_wallet == sender).first()
+
+        if not wallet_sender:
+            return user_doesnt_own_wallet_exception()
+
         wallet_user_id = wallet_sender.user_id
         if wallet_user_id != token_validity['token']['uid']:
             return user_doesnt_own_wallet_exception()
@@ -359,6 +390,10 @@ async def transfer(body: Transaction, db: Session = Depends(DB.get_db),
         # Approval sending (By reseller)
         # Check if user owns the wallet
         wallet_transactor = db.query(models.User).filter(models.User.user_wallet == transactor).first()
+
+        if not wallet_transactor:
+            return user_doesnt_own_wallet_exception()
+
         wallet_user_id = wallet_transactor.user_id
         if wallet_user_id != token_validity['token']['uid']:
             return user_doesnt_own_wallet_exception()
@@ -423,11 +458,19 @@ async def approve(body: Approval, db: Session = Depends(DB.get_db),
 
     # Check account type
     approver = db.query(models.User).filter(models.User.user_id == token_validity['token']['uid']).first()
+
+    if not approver:
+        return user_doesnt_exist_exception()
+
     if approver.user_type != "manufacturer":
         return invalid_permission_exception()
 
-    receiver_type = db.query(models.User).filter(models.User.user_wallet == receiver).first().user_type
-    if receiver_type != "reseller":
+    receiver = db.query(models.User).filter(models.User.user_wallet == receiver).first()
+
+    if not receiver:
+        return user_doesnt_exist_exception()
+
+    if receiver.user_type != "reseller":
         return receiver_not_reseller_exception()
 
     token_id = body.tid
@@ -478,8 +521,12 @@ async def validate_token(body: Validation, db: Session = Depends(DB.get_db)) -> 
     # the server will check if the token is from the manufacturer type address.
 
     # Get value from KV storage using token_id
-    tx_history = list()
+    tx_history = []
     histories = db.query(models.History).filter(models.History.token_id == token_id).all()
+
+    if not histories:
+        histories = []
+
     for history in histories:
         tx_history.append(history.tracking)
 
@@ -491,7 +538,15 @@ async def validate_token(body: Validation, db: Session = Depends(DB.get_db)) -> 
         )
 
     # Check the token is from the manufacturer type address
-    minter_type = db.query(models.User).filter(models.User.user_wallet == tx_history[0]).first().user_type
+    minter = db.query(models.User).filter(models.User.user_wallet == tx_history[0]).first()
+
+    if not minter:
+        return JSONResponse(
+            status_code=200,
+            content={'result': 'invalid', 'detail': 'Token is not properly minted.'}
+        )
+
+    minter_type = minter.user_type
     if minter_type != "manufacturer":
         return JSONResponse(
             status_code=200,
