@@ -1,9 +1,3 @@
-import os
-import json
-import datetime
-from select import select
-from telnetlib import LOGOUT
-
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
