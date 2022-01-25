@@ -6,8 +6,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-SECRET_FILE = os.path.join(BASE_DIR, '../secret.json')
-secret = json.loads(open(SECRET_FILE).read())
+SECRET_FILE = os.environ.get('DB_INFO')
+secret = json.loads(SECRET_FILE)
 DB = secret["DB"]
 
 DB_URL = f"mysql+pymysql://{DB['user']}:{DB['password']}@{DB['host']}:{DB['port']}/{DB['database']}?charset=utf8"
