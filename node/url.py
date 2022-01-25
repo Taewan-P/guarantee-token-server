@@ -15,8 +15,7 @@ from node.DataClass import NoAuthAddress, Address, Transaction, Approval, Valida
 
 node_router = APIRouter()
 
-truffleFile = json.load(open('./build/contracts/GuaranteeToken.json'))
-ABI = truffleFile['abi']
+ABI = json.loads(os.environ.get('ABI_INFO'))
 
 contract_address_env = os.environ.get('CONTRACT_ADDRESS')
 server_address_env = os.environ.get('SERVER_ADDRESS')
