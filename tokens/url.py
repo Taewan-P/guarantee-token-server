@@ -15,6 +15,7 @@ async def ping() -> JSONResponse:
         content={'result': 'success'}
     )
 
+
 @token_router.post("/tokenInfo")
 async def load_token_info(body: TokenList, db: Session = Depends(DB.get_db)):
     tokenList = body.token_list
