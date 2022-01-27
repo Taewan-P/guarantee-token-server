@@ -27,7 +27,7 @@ w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 @account_router.post("/create")
-async def create_account(account_info: AccountInfo, db: Session = Depends(DB.get_db)):
+async def create_account(account_info: AccountInfo, db: Session = Depends(DB.get_db)) -> JSONResponse:
     """
     :return: JSONResponse with proper status code.
     """
@@ -62,7 +62,7 @@ async def create_account(account_info: AccountInfo, db: Session = Depends(DB.get
 
 
 @account_router.post("/login")
-async def login(login_info: LoginInfo, db: Session = Depends(DB.get_db)):
+async def login(login_info: LoginInfo, db: Session = Depends(DB.get_db)) -> JSONResponse:
     """
     :param db: Database session
     :param login_info: ID and Password in JSON format.
