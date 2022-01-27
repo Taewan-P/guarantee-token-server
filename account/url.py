@@ -5,14 +5,16 @@ import datetime
 import bcrypt
 import jwt
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
+from typing import Optional
 from web3 import Web3, HTTPProvider
 from web3.middleware import geth_poa_middleware
 
 from database import DB, models
 from account.DataClass import LoginInfo, AccountInfo
+from node.url import validate_login_token, invalid_login_token_exception
 
 account_router = APIRouter()
 
@@ -27,7 +29,7 @@ w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 @account_router.post("/create")
-async def create_account(account_info: AccountInfo, db: Session = Depends(DB.get_db)):
+async def create_account(account_info: AccountInfo, db: Session = Depends(DB.get_db)) -> JSONResponse:
     """
     :return: JSONResponse with proper status code.
     """
@@ -62,7 +64,7 @@ async def create_account(account_info: AccountInfo, db: Session = Depends(DB.get
 
 
 @account_router.post("/login")
-async def login(login_info: LoginInfo, db: Session = Depends(DB.get_db)):
+async def login(login_info: LoginInfo, db: Session = Depends(DB.get_db)) -> JSONResponse:
     """
     :param db: Database session
     :param login_info: ID and Password in JSON format.
@@ -101,3 +103,25 @@ async def login(login_info: LoginInfo, db: Session = Depends(DB.get_db)):
             status_code=401,
             content={"error": "ID does not exist!"}
         )
+
+
+@account_router.post("/get_info")
+async def get_user_info(x_access_token: Optional[str] = Header(None), db: Session = Depends(DB.get_db)) -> JSONResponse:
+    validity = validate_login_token(x_access_token)
+
+    if validity.get('result', 'invalid') == 'invalid':
+        return invalid_login_token_exception()
+
+    extracted = jwt.decode(x_access_token, algorithms='HS256', options={'verify_signature': False,
+                                                                        'require': ['exp', 'uid']})
+
+    token_user = db.query(models.User).filter(models.User.user_id == extracted['uid']).first()
+    token_user_type = token_user.user_type
+    token_wallet = token_user.user_wallet
+
+    return JSONResponse(
+        status_code=200,
+        content={'uid': extracted['uid'], 'account': token_wallet, 'user_type': token_user_type}
+    )
+
+
