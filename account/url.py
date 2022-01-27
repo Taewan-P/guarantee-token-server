@@ -105,7 +105,7 @@ async def login(login_info: LoginInfo, db: Session = Depends(DB.get_db)) -> JSON
         )
 
 
-@account_router.post("/get_info")
+@account_router.get("/get_info")
 async def get_user_info(x_access_token: Optional[str] = Header(None), db: Session = Depends(DB.get_db)) -> JSONResponse:
     validity = validate_login_token(x_access_token)
 
