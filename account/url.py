@@ -98,6 +98,6 @@ async def login(login_info: LoginInfo, db: Session = Depends(DB.get_db)):
             )
     else:
         return JSONResponse(
-            status_code=200,
+            status_code=401,
             content={"error": "ID does not exist!"}
         )
