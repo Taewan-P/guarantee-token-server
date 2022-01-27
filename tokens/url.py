@@ -1,9 +1,3 @@
-import os
-import json
-import datetime
-from select import select
-from telnetlib import LOGOUT
-
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -20,6 +14,7 @@ async def ping() -> JSONResponse:
         status_code=200,
         content={'result': 'success'}
     )
+
 
 @token_router.post("/tokenInfo")
 async def load_token_info(body: TokenList, db: Session = Depends(DB.get_db)):
