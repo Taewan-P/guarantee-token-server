@@ -18,6 +18,7 @@ class Token(Base):
     token_id = Column(Integer, primary_key=True, nullable=False)
     logo = Column(String, nullable=False)
     brand = Column(String, nullable=False)
+    product_name = Column(String, nullable=False)
     production_date = Column(Date, nullable=False)
     expiration_date = Column(Date, nullable=False)
     details = Column(String, nullable=False)
