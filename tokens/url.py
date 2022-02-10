@@ -28,6 +28,7 @@ async def load_token_info(body: TokenList, db: Session = Depends(DB.get_db)):
             tokenInfo = {"TokenID": token.token_id,
                 "Logo": token.logo,
                 "Brand": token.brand,
+                "ProductName": token.product_name,
                 "ProductionDate": token.production_date.strftime("%Y-%m-%d"),
                 "ExpirationDate": token.expiration_date.strftime("%Y-%m-%d"),
                 "Details": token.details
