@@ -118,6 +118,13 @@ def user_doesnt_exist_exception() -> JSONResponse:
     )
 
 
+def invalid_token_info_input_exception() -> JSONResponse:
+    return JSONResponse(
+        status_code=406,
+        content={'error': 'Token info is invalid.'}
+    )
+
+
 def validate_login_token(token: str) -> dict:
     db = next(DB.get_db())
     try:
@@ -158,6 +165,10 @@ def validate_login_token(token: str) -> dict:
         return {'result': 'invalid'}
 
     return {'result': 'valid', 'token': validated}
+
+
+def is_string_blank (string):
+    return False if string and string.strip() else True
 
 
 @node_router.get("/")
@@ -204,6 +215,25 @@ async def mint_token(dest: Address, db: Session = Depends(DB.get_db),
         destination = Web3.toChecksumAddress(addr)
     except ValueError:
         return address_invalid_exception()
+
+    # Check if token info is valid
+    if is_string_blank(dest.logo):
+        return invalid_token_info_input_exception()
+
+    if is_string_blank(dest.brand):
+        return invalid_token_info_input_exception()
+
+    if is_string_blank(dest.product_name):
+        return invalid_token_info_input_exception()
+
+    if is_string_blank(dest.prod_date):
+        return invalid_token_info_input_exception()
+
+    if is_string_blank(dest.exp_date):
+        return invalid_token_info_input_exception()
+
+    if is_string_blank(dest.details):
+        return invalid_token_info_input_exception()
 
     # Check if user owns the wallet
     wallet_user = db.query(models.User).filter(models.User.user_wallet == destination).first()
@@ -256,7 +286,10 @@ async def mint_token(dest: Address, db: Session = Depends(DB.get_db),
         return node_sync_exception()
 
     history = models.History(token_id=token_id, tracking=minter)
+    token_info = models.Token(token_id=token_id, logo=dest.logo, brand=dest.brand, product_name=dest.product_name,
+                              production_date=dest.prod_date, expiration_date=dest.exp_date, details=dest.details)
     db.add(history)
+    db.add(token_info)
     db.commit()
 
     return JSONResponse(
