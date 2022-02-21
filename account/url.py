@@ -1,19 +1,19 @@
-import os
-import string
-import random
 import datetime
+import os
+import random
+import string
+from typing import Optional
+
 import bcrypt
 import jwt
-
 from fastapi import APIRouter, Depends, Header
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from typing import Optional
 from web3 import Web3, HTTPProvider
 from web3.middleware import geth_poa_middleware
 
-from database import DB, models
 from account.DataClass import LoginInfo, AccountInfo
+from database import DB, models
 from node.url import validate_login_token, invalid_login_token_exception
 
 account_router = APIRouter()
@@ -123,5 +123,3 @@ async def get_user_info(x_access_token: Optional[str] = Header(None), db: Sessio
         status_code=200,
         content={'uid': extracted['uid'], 'account': token_wallet, 'user_type': token_user_type}
     )
-
-
