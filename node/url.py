@@ -167,7 +167,7 @@ def validate_login_token(token: str) -> dict:
     return {'result': 'valid', 'token': validated}
 
 
-def is_string_blank (string):
+def is_string_blank(string):
     return False if string and string.strip() else True
 
 
@@ -198,7 +198,6 @@ async def ping_server(x_access_token: Optional[str] = Header(None)) -> JSONRespo
 @node_router.post("/mint")
 async def mint_token(dest: Address, db: Session = Depends(DB.get_db),
                      x_access_token: Optional[str] = Header(None)) -> JSONResponse:
-
     if w3.isConnected() is False:
         return not_connected_exception()
 
@@ -387,6 +386,7 @@ async def get_token_list(account: NoAuthAddress, db: Session = Depends(DB.get_db
         content={'account': address, 'tokens': result}
     )
 
+
 @node_router.post("/getTokenInfo")
 async def get_token_info(account: NoAuthAddress, db: Session = Depends(DB.get_db),
                          x_access_token: Optional[str] = Header(None)) -> JSONResponse:
@@ -438,17 +438,17 @@ async def get_token_info(account: NoAuthAddress, db: Session = Depends(DB.get_db
         token = db.query(models.Token).filter(models.Token.token_id == tokenID).first()
         if token is not None:
             tokenInfo = {"TokenID": token.token_id,
-                "Logo": token.logo,
-                "Brand": token.brand,
-                "ProductName": token.product_name,
-                "ProductionDate": token.production_date.strftime("%Y-%m-%d"),
-                "ExpirationDate": token.expiration_date.strftime("%Y-%m-%d"),
-                "Details": token.details
-            }
+                         "Logo": token.logo,
+                         "Brand": token.brand,
+                         "ProductName": token.product_name,
+                         "ProductionDate": token.production_date.strftime("%Y-%m-%d"),
+                         "ExpirationDate": token.expiration_date.strftime("%Y-%m-%d"),
+                         "Details": token.details
+                         }
             tokenInfos.append(tokenInfo)
         else:
             not_founded.append(tokenID)
-    
+
     return JSONResponse(
         status_code=200,
         content={
@@ -456,6 +456,7 @@ async def get_token_info(account: NoAuthAddress, db: Session = Depends(DB.get_db
             "NotFounded": not_founded
         }
     )
+
 
 @node_router.post("/transfer")
 async def transfer(body: Transaction, db: Session = Depends(DB.get_db),
