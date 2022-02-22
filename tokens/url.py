@@ -84,7 +84,7 @@ async def create_qr_code(body: TokenWithOwner, db: Session = Depends(DB.get_db),
             qr_code = qrcode.QRCode(
                 version=1,
                 error_correction=qrcode.constants.ERROR_CORRECT_M,
-                box_size=10,
+                box_size=4,
                 border=4,
                 image_factory=qrcode.image.svg.SvgPathFillImage
             )
