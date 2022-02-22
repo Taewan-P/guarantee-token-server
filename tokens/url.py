@@ -82,25 +82,24 @@ async def create_qr_code(body: TokenWithOwner, db: Session = Depends(DB.get_db),
             )
 
             qr_code = qrcode.QRCode(
-                version=1,
+                version=None,
                 error_correction=qrcode.constants.ERROR_CORRECT_M,
-                box_size=4,
-                border=4,
-                image_factory=qrcode.image.svg.SvgPathFillImage
+                box_size=6,
+                border=4
             )
 
             qr_code.add_data(encoded_jwt)
             qr_code.make(fit=True)
 
             byte_stream = io.BytesIO()
-            img = qr_code.make_image()
-            img.save(stream=byte_stream)
+            img = qr_code.make_image(fill_color="black", back_color="white")
+            img.save(stream=byte_stream, format="PNG")
 
             base64_converted = base64.b64encode(byte_stream.getvalue())
 
             return JSONResponse(
                 status_code=200,
-                content={'result': "data:image/svg+xml;utf8;base64," + base64_converted.decode('utf-8')}
+                content={'result': "data:image/png;base64," + base64_converted.decode('utf-8')}
             )
         else:
             return JSONResponse(
