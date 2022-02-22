@@ -29,12 +29,12 @@ async def ping() -> JSONResponse:
 
 
 @token_router.post("/tokenInfo")
-async def load_token_info(body: TokenList, db: Session = Depends(DB.get_db)):
-    tokenList = body.token_list
-    tokenInfos = list()
+async def load_token_info(body: TokenList, db: Session = Depends(DB.get_db)) -> JSONResponse:
+    token_list = body.token_list
+    token_infos = list()
     not_founded = list()
 
-    for tokenID in tokenList:
+    for tokenID in token_list:
         token = db.query(models.Token).filter(models.Token.token_id == tokenID).first()
         if token is not None:
             tokenInfo = {"TokenID": token.token_id,
@@ -45,14 +45,14 @@ async def load_token_info(body: TokenList, db: Session = Depends(DB.get_db)):
                          "ExpirationDate": token.expiration_date.strftime("%Y-%m-%d"),
                          "Details": token.details
                          }
-            tokenInfos.append(tokenInfo)
+            token_infos.append(tokenInfo)
         else:
             not_founded.append(tokenID)
 
     return JSONResponse(
         status_code=200,
         content={
-            "tokenInfo": tokenInfos,
+            "tokenInfo": token_infos,
             "NotFounded": not_founded
         }
     )
