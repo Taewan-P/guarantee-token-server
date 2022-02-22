@@ -102,6 +102,12 @@ async def create_qr_code(body: TokenWithOwner, db: Session = Depends(DB.get_db),
                 status_code=200,
                 content={'result': "data:image/svg+xml;utf8;base64," + base64_converted.decode('utf-8')}
             )
+        else:
+            return JSONResponse(
+                status_code=404,
+                content={'error': 'Invalid request. Do you own the token?'}
+            )
+
     except (UnicodeDecodeError, JSONDecodeError):
         return JSONResponse(
             status_code=503,
