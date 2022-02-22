@@ -7,7 +7,6 @@ from typing import Optional
 
 import jwt
 import qrcode
-import qrcode.image.svg
 from fastapi import APIRouter, Depends, Header
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
