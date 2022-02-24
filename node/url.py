@@ -659,7 +659,26 @@ async def validate_token(body: Validation, db: Session = Depends(DB.get_db)) -> 
             content={'result': 'invalid', 'detail': 'Token minter is not manufacturer'}
         )
 
-    return JSONResponse(
-        status_code=200,
-        content={'result': 'valid', 'txHistory': tx_history}
-    )
+    token = db.query(models.Token).filter(models.Token.token_id == token_id).first()
+
+    if token is not None:
+        token_info = {
+            "TokenID": token.token_id,
+            "Logo": token.logo,
+            "Brand": token.brand,
+            "ProductName": token.product_name,
+            "ProductionDate": token.production_date.strftime("%Y-%m-%d"),
+            "ExpirationDate": token.expiration_date.strftime("%Y-%m-%d"),
+            "Details": token.details
+        }
+
+        return JSONResponse(
+            status_code=200,
+            content={'result': 'valid', 'txHistory': tx_history, 'info': token_info}
+        )
+
+    else:
+        return JSONResponse(
+            status_code=200,
+            content={'result': 'invalid', 'details': 'Token not found from the server.'}
+        )
