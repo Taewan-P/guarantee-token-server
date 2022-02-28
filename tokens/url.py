@@ -100,7 +100,10 @@ async def create_qr_code(body: TokenWithOwner, db: Session = Depends(DB.get_db),
 
             return JSONResponse(
                 status_code=200,
-                content={'result': "data:image/png;base64," + base64_converted.decode('utf-8')}
+                content={
+                    'result': "data:image/png;base64," + base64_converted.decode('utf-8'),
+                    'public_key': public_key_env
+                }
             )
         else:
             return JSONResponse(
