@@ -19,6 +19,7 @@ from node.url import validate_login_token, invalid_login_token_exception
 account_router = APIRouter()
 
 server_address_env = os.environ.get('SERVER_ADDRESS')
+public_key_env = os.environ.get('PUBLIC_KEY')
 
 if server_address_env is None:
     print('Server Address Environment Variable Missing!!')
@@ -121,5 +122,10 @@ async def get_user_info(x_access_token: Optional[str] = Header(None), db: Sessio
 
     return JSONResponse(
         status_code=200,
-        content={'uid': extracted['uid'], 'account': token_wallet, 'user_type': token_user_type}
+        content={
+            'uid': extracted['uid'],
+            'account': token_wallet,
+            'user_type': token_user_type,
+            'public_key': public_key_env
+        }
     )

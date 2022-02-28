@@ -19,7 +19,6 @@ from tokens.DataClass import TokenList, TokenWithOwner
 
 token_router = APIRouter()
 
-public_key_env = os.environ.get('PUBLIC_KEY')
 private_key_env = base64.b64decode(os.environ.get('PRIVATE_KEY'))
 
 
@@ -100,10 +99,7 @@ async def create_qr_code(body: TokenWithOwner, db: Session = Depends(DB.get_db),
 
             return JSONResponse(
                 status_code=200,
-                content={
-                    'result': "data:image/png;base64," + base64_converted.decode('utf-8'),
-                    'public_key': public_key_env
-                }
+                content={'result': "data:image/png;base64," + base64_converted.decode('utf-8')}
             )
         else:
             return JSONResponse(
