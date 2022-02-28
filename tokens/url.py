@@ -2,6 +2,7 @@ import base64
 import datetime
 import io
 import json
+import os
 from json import JSONDecodeError
 from typing import Optional
 
@@ -17,6 +18,9 @@ from node.url import validate_login_token, invalid_login_token_exception, valida
 from tokens.DataClass import TokenList, TokenWithOwner
 
 token_router = APIRouter()
+
+public_key_env = os.environ.get('PUBLIC_KEY')
+private_key_env = base64.b64decode(os.environ.get('PRIVATE_KEY'))
 
 
 @token_router.get("/")
@@ -60,7 +64,6 @@ async def load_token_info(body: TokenList, db: Session = Depends(DB.get_db)) -> 
 @token_router.post("/create_qr")
 async def create_qr_code(body: TokenWithOwner, db: Session = Depends(DB.get_db),
                          x_access_token: Optional[str] = Header(None)) -> JSONResponse:
-
     token_validity = validate_login_token(x_access_token)
 
     if token_validity.get('result', 'invalid') == 'invalid':
@@ -71,14 +74,13 @@ async def create_qr_code(body: TokenWithOwner, db: Session = Depends(DB.get_db),
     try:
         if json.loads(result.body.decode('utf-8')).get('result') == 'valid':
             # Successful. Generating QR code.
-            encoded_jwt = jwt.encode(
-                {
+
+            payload = {
                     "tid": body.tid,
                     "owner": body.owner,
                     "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=1)
-                },
-                key=None, algorithm=None
-            )
+            }
+            encoded_jwt = jwt.encode(payload, key=private_key_env, algorithm="RS256")
 
             qr_code = qrcode.QRCode(
                 version=None,
