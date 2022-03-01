@@ -529,11 +529,11 @@ async def transfer(body: Transaction, db: Session = Depends(DB.get_db),
         print(e)
         return invalid_transfer_exception()
 
-    # Add result to K-V DB
-    tx_info = w3.eth.get_transaction(result.hex())
-    receiver_from_tx = tx_info['to']  # Append to K-V DB
+    # Add result to K-V DB  -> SOMEHOW NOT WORKING
+    # tx_info = w3.eth.get_transaction(result.hex())
+    # receiver_from_tx = tx_info['to']  # Append to K-V DB
 
-    history = models.History(token_id=token_id, tracking=receiver_from_tx)
+    history = models.History(token_id=token_id, tracking=receiver)
     db.add(history)
     db.commit()
 
