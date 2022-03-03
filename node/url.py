@@ -168,7 +168,7 @@ def validate_login_token(token: str) -> dict:
 
 
 def is_string_blank(string):
-    return False if string and string.strip() else True
+    return not bool(string and string.strip())
 
 
 @node_router.get("/")
