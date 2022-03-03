@@ -1,4 +1,3 @@
-import uvicorn
 from fastapi import FastAPI
 
 from account.url import account_router
