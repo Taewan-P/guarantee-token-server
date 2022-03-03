@@ -33,8 +33,8 @@ async def ping() -> JSONResponse:
 @token_router.post("/tokenInfo")
 async def load_token_info(body: TokenList, db: Session = Depends(DB.get_db)) -> JSONResponse:
     token_list = body.token_list
-    token_infos = list()
-    not_founded = list()
+    token_infos = []
+    not_founded = []
 
     for tokenID in token_list:
         token = db.query(models.Token).filter(models.Token.token_id == tokenID).first()

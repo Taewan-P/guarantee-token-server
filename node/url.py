@@ -431,8 +431,8 @@ async def get_token_info(account: NoAuthAddress, db: Session = Depends(DB.get_db
         else:
             result.append(tid)
 
-    tokenInfos = list()
-    not_founded = list()
+    tokenInfos = []
+    not_founded = []
 
     for tokenID in result:
         token = db.query(models.Token).filter(models.Token.token_id == tokenID).first()
