@@ -1,4 +1,5 @@
 import datetime
+from pytz import timezone, utc
 import json
 import os
 import jwt
@@ -158,7 +159,7 @@ def validate_login_token(token: str) -> dict:
         print('DB query returned NoneType')
         return {'result': 'invalid'}
 
-    current_time = datetime.datetime.now().timestamp()
+    current_time = timezone('Asia/Seoul').localize(datetime.datetime.utcnow()).timestamp()
 
     if int(validated['exp']) - current_time < 0:
         print('Token ExpiredError')

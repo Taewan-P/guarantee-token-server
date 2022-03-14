@@ -1,5 +1,6 @@
 import base64
 import datetime
+from pytz import timezone, utc
 import io
 import json
 import os
@@ -77,7 +78,7 @@ async def create_qr_code(body: TokenWithOwner, db: Session = Depends(DB.get_db),
             payload = {
                     "tid": body.tid,
                     "owner": body.owner,
-                    "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=1)
+                    "exp": timezone('Asia/Seoul').localize(datetime.datetime.utcnow()) + datetime.timedelta(minutes=1)
             }
             encoded_jwt = jwt.encode(payload, key=private_key_env, algorithm="RS256")
 

@@ -1,4 +1,5 @@
 import datetime
+from pytz import timezone, utc
 import os
 import random
 import string
@@ -82,7 +83,7 @@ async def login(login_info: LoginInfo, db: Session = Depends(DB.get_db)) -> JSON
             passphrase = ''.join(random.choice(string.ascii_letters + string.digits) for i in range(12))
             encoded_jwt = jwt.encode(
                 {
-                    "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7),
+                    "exp": timezone('Asia/Seoul').localize(datetime.datetime.utcnow()) + datetime.timedelta(days=7),
                     "uid": login_id
                 }, passphrase, algorithm="HS256"
             )
