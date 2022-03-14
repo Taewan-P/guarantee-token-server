@@ -41,6 +41,7 @@ pydantic==1.9.0
 PyJWT==2.3.0
 PyMySQL==1.0.2
 pyrsistent==0.18.0
+pytz==2021.3
 qrcode==7.3.1
 requests==2.27.1
 rlp==2.0.1
