@@ -381,6 +381,7 @@ async def get_token_list(account: NoAuthAddress, db: Session = Depends(DB.get_db
         else:
             result.append(tid)
 
+    result.sort()
     return JSONResponse(
         status_code=200,
         content={'account': address, 'tokens': result}
