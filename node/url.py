@@ -450,6 +450,7 @@ async def get_token_info(account: NoAuthAddress, db: Session = Depends(DB.get_db
         else:
             not_founded.append(tokenID)
 
+    tokenInfos.sort(key=lambda x: x["TokenID"])
     return JSONResponse(
         status_code=200,
         content={
