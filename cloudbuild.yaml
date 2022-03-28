@@ -4,7 +4,7 @@ steps:
     args: ['pip3', 'install', '-r', 'requirements.txt', '--user']
 
   - name: "ubuntu"
-    args: ["source", "./cloud_env.sh"]
+    args: ["bash", "./cloud_env.sh"]
     env:
       - CONTRACT_ADDRESS=$_CONTRACT_ADDRESS
       - DB_INFO=$_DB_INFO
