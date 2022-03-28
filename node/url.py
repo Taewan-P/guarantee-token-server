@@ -128,7 +128,12 @@ def invalid_token_info_input_exception() -> JSONResponse:
 
 
 def validate_login_token(token: str) -> dict:
-    db = next(DB.get_db())
+    try:
+        db = next(DB.get_db())
+    except Exception:
+        print('DB instance error')
+        return {'result': 'invalid'}
+
     try:
         extracted = jwt.decode(token, algorithms='HS256', options={'verify_signature': False,
                                                                    'require': ['exp', 'uid']})
