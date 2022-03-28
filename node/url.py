@@ -2,6 +2,7 @@ import datetime
 import json
 import os
 import jwt
+import sys
 
 from fastapi import APIRouter, Depends, Header
 from fastapi.responses import JSONResponse
@@ -23,11 +24,11 @@ server_address_env = os.environ.get('SERVER_ADDRESS')
 
 if contract_address_env is None:
     print('Contract Address Environment Variable Missing!!')
-    exit(1)
+    sys.exit(1)
 
 if server_address_env is None:
     print('Server Address Environment Variable Missing!!')
-    exit(1)
+    sys.exit(1)
 
 CONTRACT_ADDRESS = Web3.toChecksumAddress(contract_address_env)
 
