@@ -46,7 +46,7 @@ async def create_account(account_info: AccountInfo, db: Session = Depends(DB.get
     else:
         try:
             wallet_address = w3.geth.personal.new_account(account_wallet_pw)
-        except:
+        except Exception:
             return JSONResponse(
                 status_code=503,
                 content={"error": "Error occured while creating your wallet! Please try again."}
