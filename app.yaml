@@ -3,7 +3,6 @@ entrypoint: gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app
 instance_class: F2
 
 env_variables:
-  ABI_INFO: "%ABI_INFO%"
   CONTRACT_ADDRESS: "%CONTRACT_ADDRESS%"
   DB_INFO: "%DB_INFO%"
   PRIVATE_KEY: "%PRIVATE_KEY%"
