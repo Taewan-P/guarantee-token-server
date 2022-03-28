@@ -1,0 +1,17 @@
+steps:
+  - name: 'python'
+    id: 'Requirements'
+    args: ['pip3', 'install', '-r', 'requirements.txt', '--user']
+
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'Deploy'
+    args: ['app', 'deploy']
+    env:
+      - ABI_INFO=$_ABI_INFO
+      - CONTRACT_ADDRESS=$_CONTRACT_ADDRESS
+      - DB_INFO=$_DB_INFO
+      - PRIVATE_KEY=$_PRIVATE_KEY
+      - PUBLIC_KEY=$_PUBLIC_KEY
+      - SERVER_ADDRESS=$_SERVER_ADDRESS
+
+timeout: '600s'
