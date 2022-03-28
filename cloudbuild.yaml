@@ -3,9 +3,8 @@ steps:
     id: 'Requirements'
     args: ['pip3', 'install', '-r', 'requirements.txt', '--user']
 
-  - name: 'gcr.io/cloud-builders/gcloud'
-    id: 'Deploy'
-    args: ['app', 'deploy']
+  - name: "ubuntu"
+    args: ["bash", "./cloud_env.sh"]
     env:
       - ABI_INFO=$_ABI_INFO
       - CONTRACT_ADDRESS=$_CONTRACT_ADDRESS
@@ -13,5 +12,9 @@ steps:
       - PRIVATE_KEY=$_PRIVATE_KEY
       - PUBLIC_KEY=$_PUBLIC_KEY
       - SERVER_ADDRESS=$_SERVER_ADDRESS
+
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'Deploy'
+    args: ['app', 'deploy']
 
 timeout: '600s'
