@@ -6,7 +6,6 @@ steps:
   - name: "ubuntu"
     args: ["bash", "./cloud_env.sh"]
     env:
-      - ABI_INFO=$_ABI_INFO
       - CONTRACT_ADDRESS=$_CONTRACT_ADDRESS
       - DB_INFO=$_DB_INFO
       - PRIVATE_KEY=$_PRIVATE_KEY
