@@ -604,7 +604,7 @@ async def approve(body: Approval, db: Session = Depends(DB.get_db),
             print('Account unlock successful')
 
     try:
-        result = contract_instance.functions.approve(receiver, token_id).transact({'from': approver_wallet})
+        contract_instance.functions.approve(receiver, token_id).transact({'from': approver_wallet})
     except Exception:
         return invalid_approval_exception()
 
