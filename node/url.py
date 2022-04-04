@@ -2,6 +2,7 @@ import datetime
 import json
 import os
 import jwt
+import sys
 
 from fastapi import APIRouter, Depends, Header
 from fastapi.responses import JSONResponse
@@ -23,11 +24,11 @@ server_address_env = os.environ.get('SERVER_ADDRESS')
 
 if contract_address_env is None:
     print('Contract Address Environment Variable Missing!!')
-    exit(1)
+    sys.exit(1)
 
 if server_address_env is None:
     print('Server Address Environment Variable Missing!!')
-    exit(1)
+    sys.exit(1)
 
 CONTRACT_ADDRESS = Web3.toChecksumAddress(contract_address_env)
 
@@ -127,7 +128,12 @@ def invalid_token_info_input_exception() -> JSONResponse:
 
 
 def validate_login_token(token: str) -> dict:
-    db = next(DB.get_db())
+    try:
+        db = next(DB.get_db())
+    except Exception:
+        print('DB instance error')
+        return {'result': 'invalid'}
+
     try:
         extracted = jwt.decode(token, algorithms='HS256', options={'verify_signature': False,
                                                                    'require': ['exp', 'uid']})
@@ -603,8 +609,9 @@ async def approve(body: Approval, db: Session = Depends(DB.get_db),
             print('Account unlock successful')
 
     try:
-        result = contract_instance.functions.approve(receiver, token_id).transact({'from': approver_wallet})
-    except Exception:
+        contract_instance.functions.approve(receiver.user_wallet, token_id).transact({'from': approver_wallet})
+    except Exception as e:
+        print(e)
         return invalid_approval_exception()
 
     return JSONResponse(
