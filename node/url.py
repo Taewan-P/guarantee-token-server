@@ -644,17 +644,17 @@ async def validate_token(body: Validation, db: Session = Depends(DB.get_db)) -> 
         histories = []
 
     for history in histories:
-        tx_history.append(history.tracking)
+        tx_history.append([history.token_from, history.token_to])
 
-    # Check transaction history and validate token
-    if Web3.toChecksumAddress(tx_history[-1]) != receiver:
+    # Check whether transaction history exists or not
+    if not tx_history:
         return JSONResponse(
             status_code=200,
-            content={'result': 'invalid', 'detail': 'Token not properly owned.'}
+            content={'result': 'invalid', 'detail': 'Cannot inquire transaction history.'}
         )
 
-    # Check the token is from the manufacturer type address
-    minter = db.query(models.User).filter(models.User.user_wallet == tx_history[0]).first()
+    # Check whether token minted properly or not
+    minter = db.query(models.User).filter(models.User.user_wallet == tx_history[0][-1]).first()
 
     if not minter:
         return JSONResponse(
@@ -662,11 +662,34 @@ async def validate_token(body: Validation, db: Session = Depends(DB.get_db)) -> 
             content={'result': 'invalid', 'detail': 'Token is not properly minted.'}
         )
 
+    # Check whether first "token_from" equals to NULL or not
+    if Web3.toChecksumAddress(tx_history[0][0]) != None:
+        return JSONResponse(
+            status_code=200,
+            content={'result': 'invalid', 'detail': 'Cannot verify whether token minted properly or not.'}
+        )
+
+    # Check whether first "token_to"'s user type equals to manufacturer or not
     minter_type = minter.user_type
     if minter_type != "manufacturer":
         return JSONResponse(
             status_code=200,
             content={'result': 'invalid', 'detail': 'Token minter is not manufacturer'}
+        )
+
+    # Check whether current "token_to" equals to next "token_from" or not
+    for x in range(len(tx_history) - 1):
+        if tx_history[x][-1] != tx_history[x + 1][0]:
+            return JSONResponse(
+                status_code=200,
+                content={'result': 'invalid', 'detail': 'Sender and receiver does not match.'}
+            )
+
+    # Check whether last "token_to" equals to current owner or not
+    if Web3.toChecksumAddress(tx_history[-1][-1]) != receiver:
+        return JSONResponse(
+            status_code=200,
+            content={'result': 'invalid', 'detail': 'Token not properly owned.'}
         )
 
     token = db.query(models.Token).filter(models.Token.token_id == token_id).first()
