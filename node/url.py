@@ -291,7 +291,7 @@ async def mint_token(dest: Address, db: Session = Depends(DB.get_db),
         print(f'Error: {e}')
         return node_sync_exception()
 
-    history = models.History(token_id=token_id, tracking=minter)
+    history = models.History(token_id=token_id, token_from=None, token_to=minter, event_time=datetime.datetime.utcnow())
     token_info = models.Token(token_id=token_id, logo=dest.logo, brand=dest.brand, product_name=dest.product_name,
                               production_date=dest.prod_date, expiration_date=dest.exp_date, details=dest.details)
     db.add(history)
@@ -542,7 +542,7 @@ async def transfer(body: Transaction, db: Session = Depends(DB.get_db),
     # tx_info = w3.eth.get_transaction(result.hex())
     # receiver_from_tx = tx_info['to']  # Append to K-V DB
 
-    history = models.History(token_id=token_id, tracking=receiver)
+    history = models.History(token_id=token_id, token_from=sender, token_to=receiver, event_time=datetime.datetime.utcnow())
     db.add(history)
     db.commit()
 
