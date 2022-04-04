@@ -390,7 +390,7 @@ async def get_token_list(account: NoAuthAddress, db: Session = Depends(DB.get_db
             result.append(tid)
 
     if wallet_user.user_type == "reseller":
-        # Get Approved tokens
+        # Get approved tokens
         approved = []
         try:
             max_id = contract_instance.functions.getMaxTokenID().call()
@@ -466,6 +466,42 @@ async def get_token_info(account: NoAuthAddress, db: Session = Depends(DB.get_db
         else:
             result.append(tid)
 
+    approvedInfo = []
+    if wallet_user.user_type == "reseller":
+        # Get approved tokens
+        approved = []
+        try:
+            max_id = contract_instance.functions.getMaxTokenID().call()
+        except Exception as e:
+            print(e)
+            return node_sync_exception()
+        else:
+            try:
+                for i in range(max_id):
+                    approved_address = contract_instance.functions.getApproved(i).call()
+                    if approved_address == wallet_user.user_wallet:
+                        # Approved token
+                        approved.append(i)
+            except Exception as e:
+                print(e)
+                return node_sync_exception()
+            else:
+                print("Approval token fetch successful")
+
+            for tid in approved:
+                token = db.query(models.Token).filter(models.Token.token_id == tid).first()
+                if token is not None:
+                    tokenInfo = {"TokenID": token.token_id,
+                                 "Logo": token.logo,
+                                 "Brand": token.brand,
+                                 "ProductName": token.product_name,
+                                 "ProductionDate": token.production_date.strftime("%Y-%m-%d"),
+                                 "ExpirationDate": token.expiration_date.strftime("%Y-%m-%d"),
+                                 "Details": token.details
+                                 }
+
+                    approvedInfo.append(tokenInfo)
+
     tokenInfos = []
     not_founded = []
 
@@ -485,13 +521,23 @@ async def get_token_info(account: NoAuthAddress, db: Session = Depends(DB.get_db
             not_founded.append(tokenID)
 
     tokenInfos.sort(key=lambda x: x["TokenID"])
-    return JSONResponse(
-        status_code=200,
-        content={
-            "tokenInfo": tokenInfos,
-            "NotFounded": not_founded
-        }
-    )
+    if wallet_user.user_type == "reseller":
+        return JSONResponse(
+            status_code=200,
+            content={
+                "tokenInfo": tokenInfos,
+                "approvedInfo": approvedInfo,
+                "NotFounded": not_founded
+            }
+        )
+    else:
+        return JSONResponse(
+            status_code=200,
+            content={
+                "tokenInfo": tokenInfos,
+                "NotFounded": not_founded
+            }
+        )
 
 
 @node_router.post("/transfer")
