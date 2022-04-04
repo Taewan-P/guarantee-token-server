@@ -272,7 +272,8 @@ async def mint_token(dest: Address, db: Session = Depends(DB.get_db),
 
     try:
         result = tx.transact({'from': destination})
-    except Exception:
+    except Exception as e:
+        print(e)
         return invalid_transfer_exception()
 
     # Add transaction history to K-V DB
@@ -387,6 +388,32 @@ async def get_token_list(account: NoAuthAddress, db: Session = Depends(DB.get_db
             return node_sync_exception()
         else:
             result.append(tid)
+
+    if wallet_user.user_type == "reseller":
+        # Get Approved tokens
+        approved = []
+        try:
+            max_id = contract_instance.functions.getMaxTokenID().call()
+        except Exception as e:
+            print(e)
+            return node_sync_exception()
+        else:
+            try:
+                for i in range(max_id):
+                    approved_address = contract_instance.functions.getApproved(i).call()
+                    if approved_address == wallet_user.user_wallet:
+                        # Approved token
+                        approved.append(i)
+            except Exception as e:
+                print(e)
+                return node_sync_exception()
+            else:
+                print("Approval token fetch successful")
+                result.sort()
+                return JSONResponse(
+                    status_code=200,
+                    content={'account': address, 'tokens': result, 'approved': approved}
+                )
 
     result.sort()
     return JSONResponse(
