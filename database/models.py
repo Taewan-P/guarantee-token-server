@@ -29,4 +29,6 @@ class History(Base):
 
     history_id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
     token_id = Column(Integer, nullable=False)
-    tracking = Column(String, nullable=False)
+    token_from = Column(String, nullable=True)
+    token_to = Column(String, nullable=True)
+    event_time = Column(Date, nullable=False)
