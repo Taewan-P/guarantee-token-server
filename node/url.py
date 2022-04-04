@@ -736,7 +736,9 @@ async def validate_token(body: Validation, db: Session = Depends(DB.get_db)) -> 
         )
 
     # Check whether first "token_from" equals to NULL or not
-    if Web3.toChecksumAddress(tx_history[0][0]) != None:
+    # print(tx_history[0][0])
+    if tx_history[0][0] is not None:
+        
         return JSONResponse(
             status_code=200,
             content={'result': 'invalid', 'detail': 'Cannot verify whether token minted properly or not.'}
