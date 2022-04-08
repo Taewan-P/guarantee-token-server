@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date
+from sqlalchemy import Column, Integer, String, Date, DateTime
 from database.DB import Base
 
 
@@ -31,4 +31,4 @@ class History(Base):
     token_id = Column(Integer, nullable=False)
     token_from = Column(String, nullable=True)
     token_to = Column(String, nullable=True)
-    event_time = Column(Date, nullable=False)
+    event_time = Column(DateTime, nullable=False)
