@@ -1,3 +1,4 @@
+import copy
 import datetime
 import os
 import random
@@ -13,9 +14,10 @@ from sqlalchemy.orm import Session
 from web3 import Web3, HTTPProvider
 from web3.middleware import geth_poa_middleware
 
-from account.DataClass import LoginInfo, AccountInfo
+from account.DataClass import LoginInfo, AccountInfo, NoAuthAddress
 from database import DB, models
-from node.url import validate_login_token, invalid_login_token_exception
+from node.url import validate_login_token, invalid_login_token_exception, address_invalid_exception, \
+    user_doesnt_own_wallet_exception
 
 account_router = APIRouter()
 
@@ -129,4 +131,50 @@ async def get_user_info(x_access_token: Optional[str] = Header(None), db: Sessio
             'user_type': token_user_type,
             'public_key': public_key_env
         }
+    )
+
+
+@account_router.post("/history")
+async def get_user_history(account: NoAuthAddress, x_access_token: Optional[str] = Header(None),
+                           db: Session = Depends(DB.get_db)) -> JSONResponse:
+    # Check login token validity
+    token_validity = validate_login_token(x_access_token)
+
+    if token_validity.get('result', 'invalid') == 'invalid':
+        return invalid_login_token_exception()
+
+    try:
+        address = Web3.toChecksumAddress(account.address)
+    except ValueError:
+        return address_invalid_exception()
+
+    # Check if user owns the wallet
+    wallet_user = db.query(models.User).filter(models.User.user_wallet == address).first()
+
+    if not wallet_user:
+        return user_doesnt_own_wallet_exception()
+
+    wallet_user_id = wallet_user.user_id
+    if wallet_user_id != token_validity['token']['uid']:
+        return user_doesnt_own_wallet_exception()
+
+    # Get transaction history
+    tx_history = []
+
+    from_history = db.query(models.History).filter(models.History.token_from == address).all()
+    to_history = db.query(models.History).filter(models.History.token_to == address).all()
+
+    histories = from_history + to_history
+    histories.sort(key=lambda x: x.event_time)
+
+    if not histories:
+        histories = []
+
+    for history in histories:
+        tx_history.append([history.token_id, history.token_from, history.token_to,
+                           history.event_time.strftime('%Y/%m/%d %H:%M:%S')])
+
+    return JSONResponse(
+        status_code=200,
+        content={'result': tx_history}
     )

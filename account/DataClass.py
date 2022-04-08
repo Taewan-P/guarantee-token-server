@@ -10,3 +10,7 @@ class AccountInfo(BaseModel):
     user_id: str
     password: str
     wallet_password: str
+
+
+class NoAuthAddress(BaseModel):
+    address: str
