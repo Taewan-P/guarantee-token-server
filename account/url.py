@@ -1,4 +1,4 @@
-import copy
+import datetime
 import datetime
 import os
 import random
@@ -170,9 +170,10 @@ async def get_user_history(account: NoAuthAddress, x_access_token: Optional[str]
     if not histories:
         histories = []
 
+    KST = datetime.timedelta(hours=9)
     for history in histories:
         tx_history.append([history.token_id, history.token_from, history.token_to,
-                           history.event_time.strftime('%Y/%m/%d %H:%M:%S')])
+                           (history.event_time + KST).strftime('%Y/%m/%d %H:%M:%S')])
 
     return JSONResponse(
         status_code=200,
