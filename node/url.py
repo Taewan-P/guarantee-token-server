@@ -489,7 +489,6 @@ async def get_token_info(account: NoAuthAddress, db: Session = Depends(DB.get_db
                 token = db.query(models.Token).filter(models.Token.token_id == tid).first()
                 if token is not None:
                     tokenInfo = {"TokenID": token.token_id,
-                                 "Logo": token.logo,
                                  "Brand": token.brand,
                                  "ProductName": token.product_name,
                                  "ProductionDate": token.production_date.strftime("%Y-%m-%d"),
@@ -506,7 +505,6 @@ async def get_token_info(account: NoAuthAddress, db: Session = Depends(DB.get_db
         token = db.query(models.Token).filter(models.Token.token_id == tokenID).first()
         if token is not None:
             tokenInfo = {"TokenID": token.token_id,
-                         "Logo": token.logo,
                          "Brand": token.brand,
                          "ProductName": token.product_name,
                          "ProductionDate": token.production_date.strftime("%Y-%m-%d"),
@@ -769,7 +767,6 @@ async def validate_token(body: Validation, db: Session = Depends(DB.get_db)) -> 
     if token is not None:
         token_info = {
             "TokenID": token.token_id,
-            "Logo": token.logo,
             "Brand": token.brand,
             "ProductName": token.product_name,
             "ProductionDate": token.production_date.strftime("%Y-%m-%d"),
