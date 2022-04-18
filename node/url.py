@@ -615,7 +615,8 @@ async def transfer(body: Transaction, db: Session = Depends(DB.get_db),
     # tx_info = w3.eth.get_transaction(result.hex())
     # receiver_from_tx = tx_info['to']  # Append to K-V DB
 
-    history = models.History(token_id=token_id, token_from=sender, token_to=receiver, event_time=datetime.datetime.utcnow())
+    history = models.History(token_id=token_id, token_from=sender, token_to=receiver,
+                             event_time=datetime.datetime.utcnow())
     db.add(history)
     db.commit()
 
