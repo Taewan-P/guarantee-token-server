@@ -223,12 +223,6 @@ async def mint_token(dest: Address, db: Session = Depends(DB.get_db),
         return address_invalid_exception()
 
     # Check if token info is valid
-    if is_string_blank(dest.logo):
-        return invalid_token_info_input_exception()
-
-    if is_string_blank(dest.brand):
-        return invalid_token_info_input_exception()
-
     if is_string_blank(dest.product_name):
         return invalid_token_info_input_exception()
 
@@ -255,6 +249,9 @@ async def mint_token(dest: Address, db: Session = Depends(DB.get_db),
     minter_type = wallet_user.user_type
     if minter_type != "manufacturer":
         return invalid_permission_exception()
+
+    # Get manufacturer name
+    manufacturer_name = wallet_user.manu_name
 
     # Unlock wallet
     try:
@@ -293,7 +290,7 @@ async def mint_token(dest: Address, db: Session = Depends(DB.get_db),
         return node_sync_exception()
 
     history = models.History(token_id=token_id, token_from=None, token_to=minter, event_time=datetime.datetime.utcnow())
-    token_info = models.Token(token_id=token_id, logo=dest.logo, brand=dest.brand, product_name=dest.product_name,
+    token_info = models.Token(token_id=token_id, brand=manufacturer_name, product_name=dest.product_name,
                               production_date=dest.prod_date, expiration_date=dest.exp_date, details=dest.details)
     db.add(history)
     db.add(token_info)

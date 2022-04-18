@@ -10,6 +10,7 @@ class User(Base):
     passphrase = Column(String)
     user_wallet = Column(String)
     user_type = Column(String, nullable=False)
+    manu_name = Column(String, nullable=True)
 
 
 class Token(Base):
