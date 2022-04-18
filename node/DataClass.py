@@ -8,8 +8,6 @@ class NoAuthAddress(BaseModel):
 class Address(BaseModel):
     address: str
     wallet_password: str
-    logo: str
-    brand: str
     product_name: str
     prod_date: str
     exp_date: str

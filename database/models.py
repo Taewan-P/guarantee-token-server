@@ -10,13 +10,13 @@ class User(Base):
     passphrase = Column(String)
     user_wallet = Column(String)
     user_type = Column(String, nullable=False)
+    manu_name = Column(String, nullable=True)
 
 
 class Token(Base):
     __tablename__ = "Token"
 
     token_id = Column(Integer, primary_key=True, nullable=False)
-    logo = Column(String, nullable=False)
     brand = Column(String, nullable=False)
     product_name = Column(String, nullable=False)
     production_date = Column(Date, nullable=False)

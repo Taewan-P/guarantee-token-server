@@ -223,12 +223,6 @@ async def mint_token(dest: Address, db: Session = Depends(DB.get_db),
         return address_invalid_exception()
 
     # Check if token info is valid
-    if is_string_blank(dest.logo):
-        return invalid_token_info_input_exception()
-
-    if is_string_blank(dest.brand):
-        return invalid_token_info_input_exception()
-
     if is_string_blank(dest.product_name):
         return invalid_token_info_input_exception()
 
@@ -255,6 +249,9 @@ async def mint_token(dest: Address, db: Session = Depends(DB.get_db),
     minter_type = wallet_user.user_type
     if minter_type != "manufacturer":
         return invalid_permission_exception()
+
+    # Get manufacturer name
+    manufacturer_name = wallet_user.manu_name
 
     # Unlock wallet
     try:
@@ -293,7 +290,7 @@ async def mint_token(dest: Address, db: Session = Depends(DB.get_db),
         return node_sync_exception()
 
     history = models.History(token_id=token_id, token_from=None, token_to=minter, event_time=datetime.datetime.utcnow())
-    token_info = models.Token(token_id=token_id, logo=dest.logo, brand=dest.brand, product_name=dest.product_name,
+    token_info = models.Token(token_id=token_id, brand=manufacturer_name, product_name=dest.product_name,
                               production_date=dest.prod_date, expiration_date=dest.exp_date, details=dest.details)
     db.add(history)
     db.add(token_info)
@@ -492,7 +489,6 @@ async def get_token_info(account: NoAuthAddress, db: Session = Depends(DB.get_db
                 token = db.query(models.Token).filter(models.Token.token_id == tid).first()
                 if token is not None:
                     tokenInfo = {"TokenID": token.token_id,
-                                 "Logo": token.logo,
                                  "Brand": token.brand,
                                  "ProductName": token.product_name,
                                  "ProductionDate": token.production_date.strftime("%Y-%m-%d"),
@@ -509,7 +505,6 @@ async def get_token_info(account: NoAuthAddress, db: Session = Depends(DB.get_db
         token = db.query(models.Token).filter(models.Token.token_id == tokenID).first()
         if token is not None:
             tokenInfo = {"TokenID": token.token_id,
-                         "Logo": token.logo,
                          "Brand": token.brand,
                          "ProductName": token.product_name,
                          "ProductionDate": token.production_date.strftime("%Y-%m-%d"),
@@ -615,7 +610,8 @@ async def transfer(body: Transaction, db: Session = Depends(DB.get_db),
     # tx_info = w3.eth.get_transaction(result.hex())
     # receiver_from_tx = tx_info['to']  # Append to K-V DB
 
-    history = models.History(token_id=token_id, token_from=sender, token_to=receiver, event_time=datetime.datetime.utcnow())
+    history = models.History(token_id=token_id, token_from=sender, token_to=receiver,
+                             event_time=datetime.datetime.utcnow())
     db.add(history)
     db.commit()
 
@@ -771,7 +767,6 @@ async def validate_token(body: Validation, db: Session = Depends(DB.get_db)) -> 
     if token is not None:
         token_info = {
             "TokenID": token.token_id,
-            "Logo": token.logo,
             "Brand": token.brand,
             "ProductName": token.product_name,
             "ProductionDate": token.production_date.strftime("%Y-%m-%d"),
