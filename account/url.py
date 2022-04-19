@@ -171,8 +171,14 @@ async def get_user_history(account: NoAuthAddress, x_access_token: Optional[str]
 
     KST = datetime.timedelta(hours=9)
     for history in histories:
-        tx_history.append([history.token_id, history.token_from, history.token_to,
-                           (history.event_time + KST).strftime('%Y/%m/%d %H:%M:%S')])
+        tx_history.append(
+            {
+                "token_id": history.token_id,
+                "token_from": history.token_from,
+                "token_to": history.token_to,
+                "event_time": (history.event_time + KST).strftime('%Y/%m/%d %H:%M:%S')
+            }
+        )
 
     return JSONResponse(
         status_code=200,
