@@ -278,8 +278,18 @@ async def mint_token(dest: Address, db: Session = Depends(DB.get_db),
     minter = tx_info['from']
 
     # Get token id
+    sync_tid = contract_instance.functions.getMaxTokenID()
+
     try:
-        token_id = contract_instance.functions.getMaxTokenID().call()
+        sync_result = sync_tid.transact({'from': destination})
+    except Exception as e:
+        print(e)
+        return invalid_transfer_exception()
+    else:
+        print(f'Sync Success: {sync_result.hex()}')
+
+    try:
+        token_id = sync_tid.call()
         print(f'token_id: {token_id}')
         if token_id > 0:
             token_id -= 1
