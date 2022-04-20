@@ -279,12 +279,10 @@ async def mint_token(dest: Address, db: Session = Depends(DB.get_db),
 
     # Get token id
     try:
-        n_tokens = contract_instance.functions.balanceOf(destination).call()
-        if n_tokens == 0:
-            token_id = 0
-        else:
-            token_id = contract_instance.functions.tokenOfOwnerByIndex(destination, n_tokens - 1).call()
+        token_id = contract_instance.functions.getMaxTokenID().call()
         print(f'token_id: {token_id}')
+        if token_id > 0:
+            token_id -= 1
     except Exception as e:
         print(f'Error: {e}')
         return node_sync_exception()
