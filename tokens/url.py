@@ -22,14 +22,6 @@ token_router = APIRouter()
 private_key_env = base64.b64decode(os.environ.get('PRIVATE_KEY'))
 
 
-@token_router.get("/")
-async def ping() -> JSONResponse:
-    return JSONResponse(
-        status_code=200,
-        content={'result': 'success'}
-    )
-
-
 @token_router.post("/tokenInfo")
 async def load_token_info(body: TokenList, db: Session = Depends(DB.get_db)) -> JSONResponse:
     token_list = body.token_list
