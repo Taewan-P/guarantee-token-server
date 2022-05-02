@@ -8,3 +8,7 @@ class TokenList(BaseModel):
 class TokenWithOwner(BaseModel):
     tid: int
     owner: str
+
+
+class TokenOnly(BaseModel):
+    tid: int
