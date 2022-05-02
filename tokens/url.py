@@ -15,12 +15,43 @@ from sqlalchemy.orm import Session
 from database import DB, models
 from node.DataClass import Validation
 from node.url import validate_login_token, invalid_login_token_exception, validate_token
-from tokens.DataClass import TokenList, TokenWithOwner
+from tokens.DataClass import TokenList, TokenWithOwner, TokenOnly
 
 token_router = APIRouter()
 
 private_key_env = base64.b64decode(os.environ.get('PRIVATE_KEY'))
 
+
+@token_router.post("/manufacturer")
+async def get_manufacturer_address(body : TokenOnly, db: Session = Depends(DB.get_db)) -> JSONResponse:
+    token_id = body.tid
+    history = db.query(models.History).filter(models.History.token_id == token_id).first()
+
+    if not history:
+        return JSONResponse(
+            status_code=200,
+            content={'result': 'error', 'detail': 'Mint information does not exist'}
+        )
+
+    try:
+        minter = db.query(models.User).filter(models.User.user_wallet == history.token_to).first()
+    except AttributeError:
+        return JSONResponse(
+            status_code=503,
+            content={'result': 'error', 'detail': 'Unknown server error!'}
+        )
+
+    if not minter:
+        # This should not happen. If this happens, there is something wrong with History DB and User accounts
+        return JSONResponse(
+            status_code=404,
+            content={'result': 'error', 'detail': 'Account info not found'}
+        )
+
+    return JSONResponse(
+        status_code=200,
+        content={'result': 'success', 'detail': f'{minter.user_wallet}'}
+    )
 
 @token_router.post("/tokenInfo")
 async def load_token_info(body: TokenList, db: Session = Depends(DB.get_db)) -> JSONResponse:
