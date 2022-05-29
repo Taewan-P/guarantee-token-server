@@ -53,6 +53,7 @@ async def get_manufacturer_address(body : TokenOnly, db: Session = Depends(DB.ge
         content={'result': 'success', 'detail': f'{minter.user_wallet}'}
     )
 
+
 @token_router.post("/tokenInfo")
 async def load_token_info(body: TokenList, db: Session = Depends(DB.get_db)) -> JSONResponse:
     token_list = body.token_list
