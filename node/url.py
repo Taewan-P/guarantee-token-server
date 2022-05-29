@@ -483,6 +483,7 @@ async def get_token_info(account: NoAuthAddress, db: Session = Depends(DB.get_db
             print(e)
             return node_sync_exception()
         else:
+            print(f'Sync Success: {sync_result.hex()}')
             try:
                 for i in range(max_id):
                     approved_address = contract_instance.functions.getApproved(i).call()
