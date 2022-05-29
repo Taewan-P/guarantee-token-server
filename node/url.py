@@ -475,8 +475,10 @@ async def get_token_info(account: NoAuthAddress, db: Session = Depends(DB.get_db
     if wallet_user.user_type == "reseller":
         # Get approved tokens
         approved = []
+        sync_tid = contract_instance.functions.getMaxTokenID()
         try:
-            max_id = contract_instance.functions.getMaxTokenID().call()
+            sync_result = sync_tid.transact({'from': address})
+            max_id = sync_tid.call()
         except Exception as e:
             print(e)
             return node_sync_exception()
