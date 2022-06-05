@@ -143,6 +143,9 @@ def validate_login_token(token: str) -> dict:
     except jwt.exceptions.DecodeError:
         print('Token DecodeError')
         return {'result': 'invalid'}
+    except TypeError:
+        print('Token TypeError')
+        return {'result': 'invalid'}
 
     try:
         passphrase = db.query(models.User).filter(models.User.user_id == extracted['uid']).first().passphrase
