@@ -158,14 +158,15 @@ def validate_login_token(token: str) -> dict:
     except jwt.exceptions.InvalidSignatureError:
         print('Token InvalidSignatureError')
         return {'result': 'invalid'}
-
     except jwt.exceptions.ExpiredSignatureError:
         print('Token ExpiredSignatureError')
         return {'result': 'invalid'}
-
     except AttributeError:
         # DB query returned NoneType
         print('DB query returned NoneType')
+        return {'result': 'invalid'}
+    except TypeError:
+        # Somehow Token string has error
         return {'result': 'invalid'}
 
     current_time = datetime.datetime.now().timestamp()
