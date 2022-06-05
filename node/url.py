@@ -294,8 +294,6 @@ async def mint_token(dest: Address, db: Session = Depends(DB.get_db),
     try:
         token_id = sync_tid.call()
         print(f'token_id: {token_id}')
-        if token_id > 0:
-            token_id -= 1
     except Exception as e:
         print(f'Error: {e}')
         return node_sync_exception()
