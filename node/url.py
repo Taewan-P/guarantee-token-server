@@ -183,9 +183,18 @@ def is_string_blank(string):
 
 
 @node_router.get("/")
-async def ping_server(x_access_token: Optional[str] = Header(None)) -> JSONResponse:
+async def ping_server(db: Session = Depends(DB.get_db), x_access_token: Optional[str] = Header(None)) -> JSONResponse:
     if w3.isConnected() is False:
         return not_connected_exception()
+
+    try:
+        db.query(models.History).filter(models.Token.token_id == 0).first()
+    except Exception:
+        # DB connection Error
+        return JSONResponse(
+            status_code=503,
+            content={'status': 'DB connection error'}
+        )
 
     if not x_access_token:
         return JSONResponse(
