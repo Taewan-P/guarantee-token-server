@@ -100,7 +100,7 @@ async def create_qr_code(body: TokenWithOwner, db: Session = Depends(DB.get_db),
             payload = {
                     "tid": body.tid,
                     "owner": body.owner,
-                    "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=1)
+                    "exp": datetime.datetime.utcnow() + datetime.timedelta(seconds=15)
             }
             encoded_jwt = jwt.encode(payload, key=private_key_env, algorithm="RS256")
 
